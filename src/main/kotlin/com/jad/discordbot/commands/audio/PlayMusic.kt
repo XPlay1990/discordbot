@@ -86,6 +86,14 @@ class PlayMusic(
             return
         }
         if (command[2] == "random") {
+            if (command.size == 4) {
+                val randomSoundFileList = RandomFileSelector.getRandomSoundFileList(command[3].toInt())
+                randomSoundFileList.forEach { element ->
+                    audioPlayerManager.loadItem(element.path, customAudioLoadResultHandler)
+                }
+                return
+            }
+
             val randomSoundFile = RandomFileSelector.getRandomSoundFile()
             audioPlayerManager.loadItem(randomSoundFile.path, customAudioLoadResultHandler)
             return

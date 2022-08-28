@@ -38,4 +38,5 @@ build/
 *.pdf
 *.docx
 src/main/resources/sounds
+src/main/resources/images
 #**.properties
