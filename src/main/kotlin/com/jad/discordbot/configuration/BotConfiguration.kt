@@ -27,7 +27,7 @@ class BotConfiguration {
             .gateway()
             .setInitialPresence { _ignore: ShardInfo? ->
                 ClientPresence.online(
-                    ClientActivity.listening("@JanBot help")
+                    ClientActivity.listening("@R2D2 help")
                 )
             }
             .login()

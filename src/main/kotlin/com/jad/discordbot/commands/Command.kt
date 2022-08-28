@@ -12,6 +12,7 @@ import reactor.core.publisher.Mono
 interface Command {
     val name: String
     val description: String
+    val priority: Int
     fun handle(event: MessageCreateEvent)
 
     companion object {

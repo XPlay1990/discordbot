@@ -1,6 +1,7 @@
 package com.jad.discordbot.commands
 
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.core.`object`.entity.Member
 import discord4j.core.`object`.entity.channel.MessageChannel
 import discord4j.core.spec.EmbedCreateFields
 import discord4j.core.spec.EmbedCreateSpec
@@ -17,11 +18,15 @@ class HelpCommand(private val commands: List<Command>) : Command {
         get() = "help"
     override val description: String
         get() = "Help command"
+    override val priority: Int
+        get() = 0
 
     override fun handle(event: MessageCreateEvent) {
         event.message.channel.subscribe { messageChannel: MessageChannel ->
-
             val embeddedFields = commands.stream()
+                .sorted { o1, o2 ->
+                    o1.priority.compareTo(o2.priority)
+                }
                 .map { element -> EmbedCreateFields.Field.of(element.name, element.description, false) }
                 .collect(Collectors.toList())
 
@@ -29,11 +34,11 @@ class HelpCommand(private val commands: List<Command>) : Command {
                 EmbedCreateSpec.builder()
                     .color(Color.YELLOW)
                     .title("Help")
-                    .description("Trigger with @JanBot command\nList of possible commands:")
+                    .description("Trigger with @R2D2 command\nList of possible commands:")
                     .addAllFields(embeddedFields)
                     .image("https://sayingimages.com/wp-content/uploads/i-needs-help-help-meme.jpg")
                     .timestamp(Instant.now())
-                    .footer("build by XPlay", null)
+                    .footer("built by XPlay", null)
                     .build()
 
             messageChannel.createMessage().withEmbeds(embed).subscribe()

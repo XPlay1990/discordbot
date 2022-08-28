@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.util.ResourceUtils
 import reactor.core.publisher.Mono
-import java.lang.IllegalArgumentException
 import java.time.Duration
 
 @Component
@@ -31,11 +30,13 @@ class PlayMusic(
     override val name: String
         get() = "play"
     override val description: String
-        get() = "Plays the Audio for the provided Link\n@JanBot play https://www.youtube.com/watch?v=dQw4w9WgXcQ\n\nSubcommands:\n${
+        get() = "Plays the Audio for the provided Link\n@R2D2 play https://www.youtube.com/watch?v=dQw4w9WgXcQ\n\nSubcommands:\n${
             subCommands.joinToString(
                 " "
             )
-        }\n@JanBot play next"
+        }\n@R2D2 play next"
+    override val priority: Int
+        get() = 2
 
     private var voiceConnection: VoiceConnection? = null
 

@@ -16,6 +16,8 @@ class RandomMeme : Command {
         get() = "meme"
     override val description: String
         get() = "returns random meme"
+    override val priority: Int
+        get() = 5
 
 
     override fun handle(event: MessageCreateEvent) {

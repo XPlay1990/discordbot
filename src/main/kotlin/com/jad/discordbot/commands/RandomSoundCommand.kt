@@ -19,6 +19,8 @@ class RandomSoundCommand : Command {
         get() = "sound"
     override val description: String
         get() = "Random WC3 Sound"
+    override val priority: Int
+        get() = 10
 
     override fun handle(event: MessageCreateEvent) {
         event.message.channel.subscribe { messageChannel: MessageChannel ->

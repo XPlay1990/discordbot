@@ -19,6 +19,8 @@ class PinkFluffyUnicorns : Command {
         get() = "fluffy"
     override val description: String
         get() = "it's fluffy"
+    override val priority: Int
+        get() = 1000
 
 
     override fun handle(event: MessageCreateEvent) {
