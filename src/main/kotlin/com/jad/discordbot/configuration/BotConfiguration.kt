@@ -15,9 +15,15 @@ class BotConfiguration {
     @Value("\${discord.botToken}")
     private val botToken: String = ""
 
+    private var gatewayDiscordClient: GatewayDiscordClient? = null
+
     @Bean
     fun gatewayDiscordClient(): GatewayDiscordClient {
-        return DiscordClientBuilder.create(botToken).build()
+        if (gatewayDiscordClient != null) {
+            return gatewayDiscordClient as GatewayDiscordClient
+        }
+
+        gatewayDiscordClient = DiscordClientBuilder.create(botToken).build()
             .gateway()
             .setInitialPresence { _ignore: ShardInfo? ->
                 ClientPresence.online(
@@ -26,6 +32,7 @@ class BotConfiguration {
             }
             .login()
             .block()!!
+        return gatewayDiscordClient as GatewayDiscordClient
     }
 
     @Bean
