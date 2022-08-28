@@ -1,5 +1,6 @@
 package com.jad.discordbot.commands
 
+import com.jad.discordbot.util.RandomFileSelector
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.`object`.entity.channel.MessageChannel
 import discord4j.core.spec.MessageCreateFields
@@ -21,22 +22,12 @@ class RandomSoundCommand : Command {
 
     override fun handle(event: MessageCreateEvent) {
         event.message.channel.subscribe { messageChannel: MessageChannel ->
-            val soundFiles = Files.walk(
-                Path.of(ClassLoader.getSystemResource("sounds/wc3/").toURI())
-            )
-                .filter(Files::isRegularFile)
-                .collect(Collectors.toList())
-            val pickedFile = File(soundFiles[Random().nextInt(soundFiles.size)].toUri())
-            val resourceFileAsStream: InputStream = pickedFile.inputStream()
-            val file = MessageCreateFields.File.of(pickedFile.name, resourceFileAsStream)
+            val pickedFile = RandomFileSelector.getRandomSoundFile()
+            val file = MessageCreateFields.File.of(pickedFile.name, pickedFile.inputStream())
 
             messageChannel.createMessage(
                 "Random WC3 Sound:"
             ).withFiles(listOf(file)).subscribe()
         }
-    }
-
-    companion object {
-        private val logger = LoggerFactory.getLogger(this::class.java)
     }
 }

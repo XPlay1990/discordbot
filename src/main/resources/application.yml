@@ -1,0 +1,37 @@
+server:
+  port: 9020
+  http2:
+    enabled: true
+  compression:
+    enabled: true
+    min-response-size: 1024
+management:
+  server:
+    port: 9020
+#    endpoint:
+#      shutdown:
+#        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+spring:
+  application:
+    name: Discord Bot
+  servlet:
+    multipart:
+      file-size-threshold: 2KB
+      location: /tmp
+      max-file-size: 550MB
+      max-request-size: 600MB
+      enabled: true
+logging:
+  level:
+    root:
+      info #debug
+#    com:
+#      sedmelluq:
+#        discord:
+#          debug
+  file:
+    name: logs/Discord_Bot.log

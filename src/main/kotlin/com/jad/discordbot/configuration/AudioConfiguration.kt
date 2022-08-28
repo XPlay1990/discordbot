@@ -1,5 +1,6 @@
 package com.jad.discordbot.configuration
 
+import com.jad.discordbot.audio.AudioTrackScheduler
 import com.sedmelluq.discord.lavaplayer.format.AudioDataFormat
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
@@ -14,6 +15,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 @Configuration
 class AudioConfiguration {
     private val playerManager = DefaultAudioPlayerManager()
+    private val player: AudioPlayer = playerManager.createPlayer()
+    private val audioTrackScheduler: AudioTrackScheduler = AudioTrackScheduler(player)
+
+    init {
+        player.addListener(audioTrackScheduler)
+    }
 
     @Bean
     fun createAudioPlayerManager(): AudioPlayerManager {
@@ -36,6 +43,12 @@ class AudioConfiguration {
     @Bean
     fun createAudioPlayer(): AudioPlayer {
         // Create an AudioPlayer so Discord4J can receive audio data
-        return playerManager.createPlayer()
+        return player
+    }
+
+    @Bean
+    fun createAudioTrackScheduler(): AudioTrackScheduler {
+        // Create an AudioPlayer so Discord4J can receive audio data
+        return audioTrackScheduler
     }
 }
