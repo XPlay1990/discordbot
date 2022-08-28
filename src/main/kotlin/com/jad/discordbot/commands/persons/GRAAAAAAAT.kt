@@ -18,7 +18,6 @@ class GRAAAAAAAT : Command {
     override val priority: Int
         get() = 1002
 
-
     override fun handle(event: MessageCreateEvent) {
         event.message.channel.subscribe { messageChannel: MessageChannel ->
             messageChannel.createMessage("GRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT\nhttps://www.youtube.com/watch?v=qMPpnCvCZvw").subscribe()

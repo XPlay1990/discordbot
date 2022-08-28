@@ -48,10 +48,11 @@ class PlayMusic(
         if (command[2] == "stop") {
             logger.info("Stopping current audio")
             audioPlayer.stopTrack()
+            customAudioLoadResultHandler.audioTrackScheduler.clear()
             return
         }
 
-        joinVoice(event)
+        tryJoinVoice(event)
 
         if (handleSubCommands(command, event)) return
 
@@ -140,9 +141,12 @@ class PlayMusic(
         return false
     }
 
-    private fun joinVoice(event: MessageCreateEvent) {
-        val voiceState = event.member.get().voiceState.block()
+    private fun tryJoinVoice(event: MessageCreateEvent) {
+        if (event.message.channel.block()?.type?.name == "DM") {
+            return
+        }
 
+        val voiceState = event.member.orElse(null)?.voiceState?.block()
         if (voiceState == null) {
             event.message.channel.block()!!.createMessage("You have to enter a Voice channel so I can follow!")
                 .subscribe()
@@ -150,31 +154,33 @@ class PlayMusic(
         }
 
         val channel: VoiceChannel? = voiceState.channel.block()
-
-        if (channel != null) {
-            val provider: AudioProvider = LavaPlayerAudioProvider(audioPlayer)
-            val voiceChannelJoinSpec = VoiceChannelJoinSpec.create().withProvider(provider)
-            channel.join(voiceChannelJoinSpec).flatMap { connection ->
-                //set connection for disconnect command
-                voiceConnection = connection
-
-                // The bot itself has a VoiceState; 1 VoiceState signals bot is alone
-                val voiceStateCounter: Publisher<Boolean?> =
-                    channel.voiceStates.count().map { count -> 1L == count }
-
-                // After 10 seconds, check if the bot is alone. This is useful if
-                // the bot joined alone, but no one else joined since connecting
-                val onDelay = Mono.delay(Duration.ofSeconds(10L)).filterWhen { ignored: Long? -> voiceStateCounter }
-                    .switchIfEmpty(Mono.never()).then()
-
-                // As people join and leave `channel`, check if the bot is alone.
-                // Note the first filter is not strictly necessary, but it does prevent many unnecessary cache calls
-                val onEvent = channel.client.eventDispatcher.on(VoiceStateUpdateEvent::class.java).filter { event ->
-                    event.old.flatMap { obj: VoiceState -> obj.channelId }.map(channel.id::equals).orElse(false)
-                }.filterWhen { ignored -> voiceStateCounter }.next().then()
-                Mono.firstWithSignal(onDelay, onEvent).then(connection.disconnect())
-            }.subscribe()
+        if (channel == null) {
+            logger.info("No channel found. Not connecting.")
+            return
         }
+
+        val provider: AudioProvider = LavaPlayerAudioProvider(audioPlayer)
+        val voiceChannelJoinSpec = VoiceChannelJoinSpec.create().withProvider(provider)
+        channel.join(voiceChannelJoinSpec).flatMap { connection ->
+            //set connection for disconnect command
+            voiceConnection = connection
+
+            // The bot itself has a VoiceState; 1 VoiceState signals bot is alone
+            val voiceStateCounter: Publisher<Boolean?> =
+                channel.voiceStates.count().map { count -> 1L == count }
+
+            // After 10 seconds, check if the bot is alone. This is useful if
+            // the bot joined alone, but no one else joined since connecting
+            val onDelay = Mono.delay(Duration.ofSeconds(10L)).filterWhen { ignored: Long? -> voiceStateCounter }
+                .switchIfEmpty(Mono.never()).then()
+
+            // As people join and leave `channel`, check if the bot is alone.
+            // Note the first filter is not strictly necessary, but it does prevent many unnecessary cache calls
+            val onEvent = channel.client.eventDispatcher.on(VoiceStateUpdateEvent::class.java).filter { event ->
+                event.old.flatMap { obj: VoiceState -> obj.channelId }.map(channel.id::equals).orElse(false)
+            }.filterWhen { ignored -> voiceStateCounter }.next().then()
+            Mono.firstWithSignal(onDelay, onEvent).then(connection.disconnect())
+        }.subscribe()
     }
 
     companion object {

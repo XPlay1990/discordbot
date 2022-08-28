@@ -11,7 +11,7 @@ class RandomFileSelector {
     companion object {
         private val logger = LoggerFactory.getLogger(this::class.java)
         private val soundFiles = Files.walk(
-            Path.of(ClassLoader.getSystemResource("sounds/wc3/").toURI())
+            Path.of(ClassLoader.getSystemResource("sounds/").toURI())
         ).filter(Files::isRegularFile).collect(Collectors.toList())
 
         fun getRandomSoundFile(): File {

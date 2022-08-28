@@ -16,9 +16,9 @@ import java.util.stream.Collectors
 @Component
 class RandomSoundCommand : Command {
     override val name: String
-        get() = "sound"
+        get() = "random"
     override val description: String
-        get() = "Random WC3 Sound"
+        get() = "Random Game Sound"
     override val priority: Int
         get() = 10
 
@@ -28,7 +28,7 @@ class RandomSoundCommand : Command {
             val file = MessageCreateFields.File.of(pickedFile.name, pickedFile.inputStream())
 
             messageChannel.createMessage(
-                "Random WC3 Sound:"
+                "Random Game Sound:"
             ).withFiles(listOf(file)).subscribe()
         }
     }
