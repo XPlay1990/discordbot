@@ -26,7 +26,7 @@ class PlayMusic(
     private val audioPlayerManager: AudioPlayerManager,
     private val customAudioLoadResultHandler: CustomAudioLoadResultHandler
 ) : Command {
-    private val subCommands = listOf("next", "list", "tod", "vier", "körbe", "random", "fluffy", "balls")
+    private val subCommands = listOf("next", "list", "tot", "vier", "körbe", "random", "fluffy", "balls")
     override val name: String
         get() = "play"
     override val description: String
@@ -64,7 +64,7 @@ class PlayMusic(
             return
         }
 
-        if (command[2] == "tod") {
+        if (command[2] == "tot") {
             audioPlayerManager.loadItem(
                 ResourceUtils.getFile("classpath:sounds/wc3/Units/Human/Peasant/PeasantYesAttack4.wav").path,
                 customAudioLoadResultHandler
