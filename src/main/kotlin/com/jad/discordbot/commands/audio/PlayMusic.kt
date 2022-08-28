@@ -26,13 +26,14 @@ class PlayMusic(
     private val audioPlayerManager: AudioPlayerManager,
     private val customAudioLoadResultHandler: CustomAudioLoadResultHandler
 ) : Command {
-    private val subCommands = listOf("next", "list", "tot", "vier", "körbe", "random", "fluffy", "balls")
+    private val subCommands =
+        listOf("next", "list", "volume +100", "tot", "vier", "körbe", "random", "fluffy", "garat", "balls")
     override val name: String
         get() = "play"
     override val description: String
         get() = "Plays the Audio for the provided Link\n@R2D2 play https://www.youtube.com/watch?v=dQw4w9WgXcQ\n\nSubcommands:\n${
             subCommands.joinToString(
-                " "
+                " | "
             )
         }\n@R2D2 play next"
     override val priority: Int
@@ -52,16 +53,38 @@ class PlayMusic(
 
         joinVoice(event)
 
+        if (handleSubCommands(command, event)) return
+
+        audioPlayerManager.loadItem(command[2], customAudioLoadResultHandler)
+    }
+
+    private fun handleSubCommands(
+        command: List<String>,
+        event: MessageCreateEvent
+    ): Boolean {
+        if (command[2] == "volume") {
+            logger.info(audioPlayer.volume.toString())
+            if (command.size == 4) {
+                if (command[3].startsWith("+") || command[3].startsWith("-")) {
+                    audioPlayer.volume += command[3].toInt()
+                    return true
+                }
+
+                audioPlayer.volume = command[3].toInt()
+            }
+            return true
+        }
+
         if (command[2] == "next") {
             customAudioLoadResultHandler.audioTrackScheduler.nextTrack()
-            return
+            return true
         }
 
         if (command[2] == "list") {
             event.message.channel.block()!!.createMessage(
                 customAudioLoadResultHandler.audioTrackScheduler.describePlayList()
             ).subscribe()
-            return
+            return true
         }
 
         if (command[2] == "tot") {
@@ -69,21 +92,21 @@ class PlayMusic(
                 ResourceUtils.getFile("classpath:sounds/wc3/Units/Human/Peasant/PeasantYesAttack4.wav").path,
                 customAudioLoadResultHandler
             )
-            return
+            return true
         }
         if (command[2] == "vier") {
             audioPlayerManager.loadItem(
                 ResourceUtils.getFile("classpath:sounds/wc3/Units/Critters/VillagerKid/VillagerCWhat3.wav").path,
                 customAudioLoadResultHandler
             )
-            return
+            return true
         }
         if (command[2] == "körbe") {
             audioPlayerManager.loadItem(
                 ResourceUtils.getFile("classpath:sounds/wc3/Units/Human/GyroCopter/GyrocopterDeath1.wav").path,
                 customAudioLoadResultHandler
             )
-            return
+            return true
         }
         if (command[2] == "random") {
             if (command.size == 4) {
@@ -91,27 +114,30 @@ class PlayMusic(
                 randomSoundFileList.forEach { element ->
                     audioPlayerManager.loadItem(element.path, customAudioLoadResultHandler)
                 }
-                return
+                return true
             }
 
             val randomSoundFile = RandomFileSelector.getRandomSoundFile()
             audioPlayerManager.loadItem(randomSoundFile.path, customAudioLoadResultHandler)
-            return
+            return true
         }
         if (command[2] == "fluffy") {
             audioPlayerManager.loadItem("https://www.youtube.com/watch?v=5wb5HWVh6Fs", customAudioLoadResultHandler)
-            return
+            return true
+        }
+        if (command[2] == "garat") {
+            audioPlayerManager.loadItem("https://www.youtube.com/watch?v=qMPpnCvCZvw", customAudioLoadResultHandler)
+            return true
         }
         if (command[2] == "balls") {
             audioPlayerManager.loadItem(
                 ResourceUtils.getFile("classpath:sounds/Duke_Nukem/I've Got Balls of Steel 2.mp3").path,
                 customAudioLoadResultHandler
             )
-            return
+            return true
         }
 
-
-        audioPlayerManager.loadItem(command[2], customAudioLoadResultHandler)
+        return false
     }
 
     private fun joinVoice(event: MessageCreateEvent) {
