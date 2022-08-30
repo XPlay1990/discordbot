@@ -3,9 +3,12 @@ package com.jad.discordbot.commands.audio
 import com.jad.discordbot.audio.CustomAudioLoadResultHandler
 import com.jad.discordbot.audio.LavaPlayerAudioProvider
 import com.jad.discordbot.commands.Command
+import com.jad.discordbot.configuration.BotConfiguration.Companion.DEFAULT_VOICE_CHANNEL_ID
 import com.jad.discordbot.util.RandomFileSelector
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
+import discord4j.common.util.Snowflake
+import discord4j.core.GatewayDiscordClient
 import discord4j.core.event.domain.VoiceStateUpdateEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.`object`.VoiceState
@@ -15,6 +18,8 @@ import discord4j.voice.AudioProvider
 import discord4j.voice.VoiceConnection
 import org.reactivestreams.Publisher
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import org.springframework.util.ResourceUtils
 import reactor.core.publisher.Mono
@@ -22,6 +27,8 @@ import java.time.Duration
 
 @Component
 class PlayMusic(
+    @Value("\${resources.sounds.path}")
+    private val soundPath: String = "",
     private val audioPlayer: AudioPlayer,
     private val audioPlayerManager: AudioPlayerManager,
     private val customAudioLoadResultHandler: CustomAudioLoadResultHandler
@@ -45,26 +52,32 @@ class PlayMusic(
         val content: String = event.message.content
         val command: List<String> = content.split(" ")
 
-        if (command[2] == "stop") {
-            logger.info("Stopping current audio")
-            audioPlayer.stopTrack()
-            customAudioLoadResultHandler.audioTrackScheduler.clear()
+        handleJoinVoiceChannel(event)
+
+        if (command[2] == "list") {
+            event.message.channel.block()!!.createMessage(
+                customAudioLoadResultHandler.audioTrackScheduler.describePlayList()
+            ).subscribe()
             return
         }
 
-        tryJoinVoice(event)
-
-        if (handleSubCommands(command, event)) return
+        if (handleSubCommands(command)) return
 
         audioPlayerManager.loadItem(command[2], customAudioLoadResultHandler)
     }
 
-    private fun handleSubCommands(
-        command: List<String>,
-        event: MessageCreateEvent
+    @Async
+    fun handleSubCommands(
+        command: List<String>
     ): Boolean {
+        if (command[2] == "stop") {
+            logger.info("Stopping current audio")
+            audioPlayer.stopTrack()
+            customAudioLoadResultHandler.audioTrackScheduler.clear()
+            return true
+        }
+
         if (command[2] == "volume") {
-            logger.info(audioPlayer.volume.toString())
             if (command.size == 4) {
                 if (command[3].startsWith("+") || command[3].startsWith("-")) {
                     audioPlayer.volume += command[3].toInt()
@@ -81,30 +94,23 @@ class PlayMusic(
             return true
         }
 
-        if (command[2] == "list") {
-            event.message.channel.block()!!.createMessage(
-                customAudioLoadResultHandler.audioTrackScheduler.describePlayList()
-            ).subscribe()
-            return true
-        }
-
         if (command[2] == "tot") {
             audioPlayerManager.loadItem(
-                ResourceUtils.getFile("classpath:sounds/wc3/Units/Human/Peasant/PeasantYesAttack4.wav").path,
+                ResourceUtils.getFile("${soundPath}/wc3/Units/Human/Peasant/PeasantYesAttack4.wav").path,
                 customAudioLoadResultHandler
             )
             return true
         }
         if (command[2] == "vier") {
             audioPlayerManager.loadItem(
-                ResourceUtils.getFile("classpath:sounds/wc3/Units/Critters/VillagerKid/VillagerCWhat3.wav").path,
+                ResourceUtils.getFile("${soundPath}/wc3/Units/Critters/VillagerKid/VillagerCWhat3.wav").path,
                 customAudioLoadResultHandler
             )
             return true
         }
         if (command[2] == "körbe") {
             audioPlayerManager.loadItem(
-                ResourceUtils.getFile("classpath:sounds/wc3/Units/Human/GyroCopter/GyrocopterDeath1.wav").path,
+                ResourceUtils.getFile("${soundPath}/wc3/Units/Human/GyroCopter/GyrocopterDeath1.wav").path,
                 customAudioLoadResultHandler
             )
             return true
@@ -122,6 +128,11 @@ class PlayMusic(
             audioPlayerManager.loadItem(randomSoundFile.path, customAudioLoadResultHandler)
             return true
         }
+        if (command[2] == "randomDE") {
+            val randomSoundFile = RandomFileSelector.getRandomSoundFileDE()
+            audioPlayerManager.loadItem(randomSoundFile.path, customAudioLoadResultHandler)
+            return true
+        }
         if (command[2] == "fluffy") {
             audioPlayerManager.loadItem("https://www.youtube.com/watch?v=5wb5HWVh6Fs", customAudioLoadResultHandler)
             return true
@@ -132,7 +143,7 @@ class PlayMusic(
         }
         if (command[2] == "balls") {
             audioPlayerManager.loadItem(
-                ResourceUtils.getFile("classpath:sounds/Duke_Nukem/I've Got Balls of Steel 2.mp3").path,
+                ResourceUtils.getFile("${soundPath}/Duke_Nukem/I've Got Balls of Steel 2.mp3").path,
                 customAudioLoadResultHandler
             )
             return true
@@ -141,33 +152,40 @@ class PlayMusic(
         return false
     }
 
-    private fun tryJoinVoice(event: MessageCreateEvent) {
+    private fun handleJoinVoiceChannel(event: MessageCreateEvent) {
         if (event.message.channel.block()?.type?.name == "DM") {
             return
         }
 
         val voiceState = event.member.orElse(null)?.voiceState?.block()
         if (voiceState == null) {
-            event.message.channel.block()!!.createMessage("You have to enter a Voice channel so I can follow!")
-                .subscribe()
+            joinDefaultVoiceChannel(event.client)
             return
         }
 
-        val channel: VoiceChannel? = voiceState.channel.block()
-        if (channel == null) {
+        val voiceChannel: VoiceChannel? = voiceState.channel.block()
+        if (voiceChannel == null) {
             logger.info("No channel found. Not connecting.")
             return
         }
+        joinVoiceChannel(voiceChannel)
+        return
+    }
 
+    fun joinDefaultVoiceChannel(client: GatewayDiscordClient) {
+        joinVoiceChannel(client.getChannelById(Snowflake.of(DEFAULT_VOICE_CHANNEL_ID)).block()!! as VoiceChannel)
+    }
+
+    fun joinVoiceChannel(voiceChannel: VoiceChannel) {
         val provider: AudioProvider = LavaPlayerAudioProvider(audioPlayer)
         val voiceChannelJoinSpec = VoiceChannelJoinSpec.create().withProvider(provider)
-        channel.join(voiceChannelJoinSpec).flatMap { connection ->
+        voiceChannel.join(voiceChannelJoinSpec).flatMap { connection ->
             //set connection for disconnect command
             voiceConnection = connection
 
             // The bot itself has a VoiceState; 1 VoiceState signals bot is alone
             val voiceStateCounter: Publisher<Boolean?> =
-                channel.voiceStates.count().map { count -> 1L == count }
+                voiceChannel.voiceStates.count().map { count -> 1L == count }
 
             // After 10 seconds, check if the bot is alone. This is useful if
             // the bot joined alone, but no one else joined since connecting
@@ -176,8 +194,8 @@ class PlayMusic(
 
             // As people join and leave `channel`, check if the bot is alone.
             // Note the first filter is not strictly necessary, but it does prevent many unnecessary cache calls
-            val onEvent = channel.client.eventDispatcher.on(VoiceStateUpdateEvent::class.java).filter { event ->
-                event.old.flatMap { obj: VoiceState -> obj.channelId }.map(channel.id::equals).orElse(false)
+            val onEvent = voiceChannel.client.eventDispatcher.on(VoiceStateUpdateEvent::class.java).filter { event ->
+                event.old.flatMap { obj: VoiceState -> obj.channelId }.map(voiceChannel.id::equals).orElse(false)
             }.filterWhen { ignored -> voiceStateCounter }.next().then()
             Mono.firstWithSignal(onDelay, onEvent).then(connection.disconnect())
         }.subscribe()

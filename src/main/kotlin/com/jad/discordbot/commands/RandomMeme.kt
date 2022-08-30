@@ -21,6 +21,17 @@ class RandomMeme : Command {
 
 
     override fun handle(event: MessageCreateEvent) {
+        val messageChannel = event.message.channel.block()
+
+        if(messageChannel == null){
+            logger.warn("No Channel found for Meme post")
+            return
+        }
+
+        sendMeme(messageChannel)
+    }
+
+    fun sendMeme(messageChannel: MessageChannel) {
         val jsonFlux = WebClient.create()
             .get()
             .uri("https://meme-api.herokuapp.com/gimme")
@@ -35,9 +46,7 @@ class RandomMeme : Command {
                 .image(jsonResponse.get("url")!!.asText())
                 .build()
 
-        event.message.channel.subscribe { messageChannel: MessageChannel ->
-            messageChannel.createMessage().withEmbeds(embed).subscribe()
-        }
+        messageChannel.createMessage().withEmbeds(embed).subscribe()
     }
 
     companion object {
