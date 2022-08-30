@@ -25,14 +25,14 @@ spring:
       max-file-size: 550MB
       max-request-size: 600MB
       enabled: true
-  task:
-    scheduling:
-      pool:
-        size: 6
+#  task:
+#    scheduling:
+#      pool:
+#        size: 3
 logging:
   level:
     root:
-      debug #debug
+      info #debug
 #    com:
 #      sedmelluq:
 #        discord:

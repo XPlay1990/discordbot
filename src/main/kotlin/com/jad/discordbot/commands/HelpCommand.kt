@@ -7,7 +7,6 @@ import discord4j.core.event.domain.interaction.ButtonInteractionEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.`object`.component.ActionRow
 import discord4j.core.`object`.component.Button
-import discord4j.core.`object`.entity.channel.GuildChannel
 import discord4j.core.`object`.entity.channel.MessageChannel
 import discord4j.core.`object`.entity.channel.VoiceChannel
 import discord4j.core.spec.EmbedCreateFields
@@ -52,7 +51,14 @@ class HelpCommand(
 
             val tempListener: Mono<Void> = event.client.on(ButtonInteractionEvent::class.java) { event ->
                 when (event.customId) {
-                    "joinVoice" -> playMusic.joinVoiceChannel(event.client.getChannelById(Snowflake.of(DEFAULT_VOICE_CHANNEL_ID)).block()!! as VoiceChannel)
+                    "joinVoice" -> playMusic.joinVoiceChannel(
+                        event.client.getChannelById(
+                            Snowflake.of(
+                                DEFAULT_VOICE_CHANNEL_ID
+                            )
+                        ).block()!! as VoiceChannel
+                    )
+
                     "playRandom" -> playMusic.handleSubCommands(listOf("", "", "random"))
                     "playRandomDE" -> playMusic.handleSubCommands(listOf("", "", "randomDE"))
                     "meme" -> {

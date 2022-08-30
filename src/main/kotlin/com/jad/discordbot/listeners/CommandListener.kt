@@ -10,13 +10,10 @@ import java.util.concurrent.atomic.AtomicReference
 
 @Component
 class CommandListener(commands: List<Command>, client: GatewayDiscordClient) {
-    private val commands: Collection<Command>
-
     init {
         val startTime = AtomicReference<Long>()
-        val botMention= "<@${client.self.block()!!.id.asString()}>"
+        val botMention = "<@${client.self.block()!!.id.asString()}>"
 
-        this.commands = commands
         client.on(MessageCreateEvent::class.java)
             .map { messageCreateEvent: MessageCreateEvent ->
                 startTime.set(System.nanoTime())
@@ -43,7 +40,7 @@ class CommandListener(commands: List<Command>, client: GatewayDiscordClient) {
                 foundCommand.handle(messageCreateEvent)
                 logger.info("Time taken : ${TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get())} milliseconds.")
             }
-            .blockLast()
+            .subscribe()
     }
 
     companion object {
