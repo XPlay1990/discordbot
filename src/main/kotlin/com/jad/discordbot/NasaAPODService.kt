@@ -23,7 +23,7 @@ class NasaAPODService(private val gatewayDiscordClient: GatewayDiscordClient) {
     private val botChannelId: String = ""
 
     // Every day at 23:00
-    @Scheduled(cron = "0 0 23 * * *")
+    @Scheduled(cron = "\${nasa.cron}", zone = "Europe/Berlin")
     fun getPictureOfTheDay() {
         logger.info("Posting Picture of the Day")
         //fetch picture of the day from NASA

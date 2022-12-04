@@ -2,6 +2,8 @@ package com.jad.discordbot.configuration
 
 import discord4j.core.DiscordClientBuilder
 import discord4j.core.GatewayDiscordClient
+import discord4j.core.`object`.entity.Guild
+import discord4j.core.`object`.entity.channel.GuildChannel
 import discord4j.core.`object`.presence.ClientActivity
 import discord4j.core.`object`.presence.ClientPresence
 import discord4j.gateway.ShardInfo
@@ -10,6 +12,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import java.util.stream.Collectors
 
 @Configuration
 class BotConfiguration {
