@@ -14,7 +14,7 @@
     <name>discordbot</name>
     <description>Bot for Discord</description>
     <properties>
-        <java.version>18</java.version>
+        <java.version>17</java.version>
         <kotlin.version>1.7.21</kotlin.version>
         <dockerRegistry>qdsoftware.azurecr.io</dockerRegistry>
 
