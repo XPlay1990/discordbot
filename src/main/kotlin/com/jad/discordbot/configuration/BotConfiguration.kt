@@ -26,7 +26,7 @@ class BotConfiguration {
 
         gatewayDiscordClient = DiscordClientBuilder.create(botToken).build()
             .gateway()
-            .setInitialPresence { _ignore: ShardInfo? ->
+            .setInitialPresence { _: ShardInfo? ->
                 ClientPresence.online(
                     ClientActivity.listening("@R2D2 help")
                 )

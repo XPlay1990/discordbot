@@ -68,7 +68,7 @@ class HelpCommand(
                 return@on event.reply() // creates warning in log, "Message cannot be empty" -> Discord4j bug
             }.timeout(Duration.ofMinutes(30)) // Timeout after 30 minutes
                 // Handle TimeoutException that will be thrown when the above times out
-                .onErrorResume(TimeoutException::class.java) { ignore -> Mono.empty() }
+                .onErrorResume(TimeoutException::class.java) { _ -> Mono.empty() }
                 .then() //Transform the flux to a mono
 
             messageChannel.createMessage().withEmbeds(embed)

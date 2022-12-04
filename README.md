@@ -5,3 +5,4 @@ Current Features:
 - Playing youtube/random local sounds
 - Random memes
 - embedded Help
+- Posting Nasa Picture of the day

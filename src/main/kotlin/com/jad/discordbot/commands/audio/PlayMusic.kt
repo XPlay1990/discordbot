@@ -189,14 +189,14 @@ class PlayMusic(
 
             // After 10 seconds, check if the bot is alone. This is useful if
             // the bot joined alone, but no one else joined since connecting
-            val onDelay = Mono.delay(Duration.ofSeconds(10L)).filterWhen { ignored: Long? -> voiceStateCounter }
+            val onDelay = Mono.delay(Duration.ofSeconds(10L)).filterWhen { _: Long? -> voiceStateCounter }
                 .switchIfEmpty(Mono.never()).then()
 
             // As people join and leave `channel`, check if the bot is alone.
             // Note the first filter is not strictly necessary, but it does prevent many unnecessary cache calls
             val onEvent = voiceChannel.client.eventDispatcher.on(VoiceStateUpdateEvent::class.java).filter { event ->
                 event.old.flatMap { obj: VoiceState -> obj.channelId }.map(voiceChannel.id::equals).orElse(false)
-            }.filterWhen { ignored -> voiceStateCounter }.next().then()
+            }.filterWhen { _ -> voiceStateCounter }.next().then()
             Mono.firstWithSignal(onDelay, onEvent).then(connection.disconnect())
         }.subscribe()
     }

@@ -15,6 +15,8 @@ management:
     web:
       exposure:
         include: "*"
+    health:
+      show-details: always
 spring:
   application:
     name: Discord Bot
@@ -25,10 +27,17 @@ spring:
       max-file-size: 550MB
       max-request-size: 600MB
       enabled: true
-#  task:
-#    scheduling:
-#      pool:
-#        size: 3
+  boot:
+    admin:
+      client:
+        url: http://localhost:9021
+        username: admin
+        password: password
+  task:
+    scheduling:
+      pool:
+        size: 2
+
 logging:
   level:
     root:
