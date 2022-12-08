@@ -36,7 +36,10 @@ class NasaAPODService(private val gatewayDiscordClient: GatewayDiscordClient) {
         val botChannel = getBotChannel()
 
         botChannel.createMessage(
-            "${jsonResponse!!.get("title").asText()!!}\n" + "NASA Picture of the day\n" + url
+            "NASA Picture of the day\n\n${jsonResponse!!.get("title").asText()!!}\n" +
+                    "\n${
+                jsonResponse.get("explanation").asText()!!
+            }\n$url"
         ).subscribe()
     }
 
@@ -45,7 +48,7 @@ class NasaAPODService(private val gatewayDiscordClient: GatewayDiscordClient) {
         if (url == null) {
             url = jsonResponse.get("url").asText()!!
         }
-        // replace embedding if it is a youtube video
+        // replace embedding if it is a YouTube video
         url = url.replace(
             "/embed/", "/watch?v="
         ).replace("?rel=0", "")
