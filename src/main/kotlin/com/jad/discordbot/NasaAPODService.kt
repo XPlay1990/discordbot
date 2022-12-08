@@ -31,12 +31,25 @@ class NasaAPODService(private val gatewayDiscordClient: GatewayDiscordClient) {
         val jsonFlux = WebClient.create().get().uri(nasaUrl + apiKey).retrieve().bodyToFlux(JsonNode::class.java)
 
         val jsonResponse = jsonFlux.blockLast()
+        val url = getUrlFromRequest(jsonResponse)
 
         val botChannel = getBotChannel()
+
         botChannel.createMessage(
-            "${jsonResponse!!.get("title").asText()!!}\n" + "NASA Picture of the day\n" + jsonResponse.get("url")
-                .asText()!!.replace("/embed/", "/watch?v=").replace("?rel=0", "")
+            "${jsonResponse!!.get("title").asText()!!}\n" + "NASA Picture of the day\n" + url
         ).subscribe()
+    }
+
+    private fun getUrlFromRequest(jsonResponse: JsonNode?): String {
+        var url = jsonResponse!!.get("hdurl")?.asText()
+        if (url == null) {
+            url = jsonResponse.get("url").asText()!!
+        }
+        // replace embedding if it is a youtube video
+        url = url.replace(
+            "/embed/", "/watch?v="
+        ).replace("?rel=0", "")
+        return url
     }
 
     private fun getBotChannel(): MessageChannel {
