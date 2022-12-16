@@ -6,11 +6,15 @@ import discord4j.core.`object`.entity.channel.MessageChannel
 import discord4j.core.spec.EmbedCreateSpec
 import discord4j.core.spec.MessageCreateFields
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.util.ResourceUtils
 
 @Component
 class FildonS4 : Command {
+
+    @Value("\${resources.images.path}")
+    private val imagePath: String = ""
     override val name: String
         get() = "fildon"
     override val description: String
@@ -20,11 +24,8 @@ class FildonS4 : Command {
 
 
     override fun handle(event: MessageCreateEvent) {
-        val fildonPic = ResourceUtils.getFile("classpath:images/Fildon.png")
-        val embed: EmbedCreateSpec =
-            EmbedCreateSpec.builder()
-                .image("attachment://Fildon.png")
-                .build()
+        val fildonPic = ResourceUtils.getFile("$imagePath/Fildon.jpg")
+        val embed: EmbedCreateSpec = EmbedCreateSpec.builder().image("attachment://Fildon.png").build()
 
         val file = MessageCreateFields.File.of("Fildon.png", fildonPic.inputStream())
 
