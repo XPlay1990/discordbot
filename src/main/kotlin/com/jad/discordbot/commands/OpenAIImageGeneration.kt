@@ -5,10 +5,13 @@ import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.EmbedCreateSpec
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.BodyInserters
+import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
+
 
 @Component
 class OpenAIImageGeneration : Command {
@@ -35,23 +38,29 @@ class OpenAIImageGeneration : Command {
             return
         }
 
-        val imageUrl = getImage(prompt)
+        try {
+            val imageUrl = getImage(prompt)
 
-        if (imageUrl == null) {
-            messageChannel.createMessage("Error while creating Image.\n\n Please try again.").subscribe()
-            return
+            if (imageUrl == null) {
+                messageChannel.createMessage("Error while creating Image.\n\n Please try again.").subscribe()
+                return
+            }
+
+            val embed: EmbedCreateSpec = EmbedCreateSpec.builder().title(prompt).image(imageUrl).build()
+
+            messageChannel.createMessage().withEmbeds(embed).subscribe()
+        } catch (e: Exception) {
+            logger.error("Error while creating Image $prompt", e)
+            messageChannel.createMessage("Error while creating Image: ${prompt}.\n\n ${e.message}").subscribe()
         }
-
-        val embed: EmbedCreateSpec = EmbedCreateSpec.builder().title(prompt).image(imageUrl).build()
-
-        messageChannel.createMessage().withEmbeds(embed).subscribe()
     }
 
     private fun getImage(prompt: String): String? {
-        val jsonFlux =
-            WebClient.create().post().uri(openAIUrl).header("Authorization", "Bearer $openAIKey").contentType(
-                MediaType.APPLICATION_JSON
-            ).body(BodyInserters.fromValue(MessageBody(prompt))).retrieve().bodyToFlux(JsonNode::class.java)
+        val jsonFlux = WebClient.create().post().uri(openAIUrl).header("Authorization", "Bearer $openAIKey")
+            .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(MessageBody(prompt))).retrieve()
+            .onStatus(HttpStatus.BAD_REQUEST::equals) { response: ClientResponse ->
+                response.bodyToMono(String::class.java).map { IllegalStateException(it) }
+            }.bodyToFlux(JsonNode::class.java)
 
         val jsonResponse = jsonFlux.blockLast()
 
