@@ -2,15 +2,25 @@ package com.jad.discordbot.commands
 
 import com.fasterxml.jackson.databind.JsonNode
 import discord4j.core.event.domain.message.MessageCreateEvent
-import discord4j.core.spec.EmbedCreateSpec
+import discord4j.core.spec.MessageCreateFields
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.core.io.buffer.DataBuffer
+import org.springframework.core.io.buffer.DataBufferUtils
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
+import org.springframework.web.reactive.function.BodyExtractors
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.util.DefaultUriBuilderFactory
+import reactor.core.publisher.Flux
+import reactor.core.scheduler.Schedulers
+import java.io.IOException
+import java.io.InputStream
+import java.io.PipedInputStream
+import java.io.PipedOutputStream
 
 
 @Component
@@ -28,6 +38,8 @@ class OpenAIImageGeneration : Command {
     @Value("\${openai.apikey}")
     private val openAIKey: String = ""
 
+    @Value("\${openai.imageCount}")
+    private val imageCount: Int = 1
     override fun handle(event: MessageCreateEvent) {
         val messageChannel = event.message.channel.block()
         val content: String = event.message.content
@@ -39,35 +51,82 @@ class OpenAIImageGeneration : Command {
         }
 
         try {
-            val imageUrl = getImage(prompt)
+            val webClient = WebClient.create()
 
-            if (imageUrl == null) {
+            val imageUrlList = getImageUrls(webClient, prompt)
+
+            if (imageUrlList.isEmpty()) {
                 messageChannel.createMessage("Error while creating Image.\n\n Please try again.").subscribe()
                 return
             }
 
-            val embed: EmbedCreateSpec = EmbedCreateSpec.builder().title(prompt).image(imageUrl).build()
+            val embeddingFields = mutableListOf<MessageCreateFields.File>()
+            imageUrlList.forEachIndexed { index, imageUrl ->
+                logger.info("Downloading Image $imageUrl")
+                val imageInputStream = getImageAsInputStream(imageUrl)
+                if (imageInputStream != null) {
+                    embeddingFields.add(
+                        MessageCreateFields.File.of(
+                            "$index.jpg", imageInputStream
+                        )
+                    )
+                }
+            }
 
-            messageChannel.createMessage().withEmbeds(embed).subscribe()
+            messageChannel.createMessage(prompt).withFiles(embeddingFields).subscribe()
         } catch (e: Exception) {
             logger.error("Error while creating Image $prompt", e)
             messageChannel.createMessage("Error while creating Image: ${prompt}.\n\n ${e.message}").subscribe()
         }
     }
 
-    private fun getImage(prompt: String): String? {
-        val jsonFlux = WebClient.create().post().uri(openAIUrl).header("Authorization", "Bearer $openAIKey")
-            .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(MessageBody(prompt))).retrieve()
-            .onStatus({ statusCode: HttpStatusCode -> statusCode.isError }) { response: ClientResponse ->
+    private fun getImageUrls(webClient: WebClient, prompt: String): ArrayList<String> {
+        val jsonFlux = webClient.post().uri(openAIUrl).header("Authorization", "Bearer $openAIKey")
+            .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(MessageBody(prompt, imageCount)))
+            .retrieve().onStatus({ statusCode: HttpStatusCode -> statusCode.isError }) { response: ClientResponse ->
                 response.bodyToMono(String::class.java).map { IllegalStateException(it) }
             }.bodyToFlux(JsonNode::class.java)
 
         val jsonResponse = jsonFlux.blockLast()
 
-        return jsonResponse?.get("data")?.get(0)?.get("url")?.asText()
+        val imageLinks = ArrayList<String>()
+        jsonResponse?.get("data")?.forEach { dataElement ->
+            val url = dataElement.get("url")?.asText()
+            if (url != null) {
+                imageLinks.add(url)
+            }
+        }
+        return imageLinks
     }
 
-    private class MessageBody(val prompt: String, val n: Int = 1, val size: String = "1024x1024")
+    fun getImageAsInputStream(url: String): InputStream? {
+        val factory = DefaultUriBuilderFactory()
+        factory.encodingMode = DefaultUriBuilderFactory.EncodingMode.NONE
+        val webClient = WebClient.builder().uriBuilderFactory(factory).build()
+
+
+        val body: Flux<DataBuffer> = webClient.get().uri(url)
+            .exchangeToFlux { clientResponse: ClientResponse -> clientResponse.body(BodyExtractors.toDataBuffers()) }
+            .doOnError(IOException::class.java) { e: IOException -> logger.error("Error while downloading Image", e) }
+            .doOnCancel { logger.info("Image-Download cancelled") }.retry(3)
+
+        return imageRequestToInputStream(body)
+    }
+
+    private fun imageRequestToInputStream(body: Flux<DataBuffer>): PipedInputStream {
+        val osPipe = PipedOutputStream()
+        val isPipe = PipedInputStream(osPipe)
+
+        DataBufferUtils.write(body, osPipe).subscribeOn(Schedulers.boundedElastic()).doOnComplete {
+            try {
+                osPipe.close()
+            } catch (ignored: IOException) {
+            }
+        }.subscribe(DataBufferUtils.releaseConsumer())
+        return isPipe
+    }
+
+    private class MessageBody(val prompt: String, val n: Int, val size: String = "1024x1024")
 
     companion object {
         private val logger = LoggerFactory.getLogger(this::class.java)
