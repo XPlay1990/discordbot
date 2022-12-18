@@ -5,7 +5,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.EmbedCreateSpec
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.BodyInserters
@@ -58,7 +58,7 @@ class OpenAIImageGeneration : Command {
     private fun getImage(prompt: String): String? {
         val jsonFlux = WebClient.create().post().uri(openAIUrl).header("Authorization", "Bearer $openAIKey")
             .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(MessageBody(prompt))).retrieve()
-            .onStatus(HttpStatus.BAD_REQUEST::equals) { response: ClientResponse ->
+            .onStatus({ statusCode: HttpStatusCode -> statusCode.isError }) { response: ClientResponse ->
                 response.bodyToMono(String::class.java).map { IllegalStateException(it) }
             }.bodyToFlux(JsonNode::class.java)
 
