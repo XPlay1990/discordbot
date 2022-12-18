@@ -81,7 +81,7 @@ class OpenAIImageGeneration : Command {
             val updatedMessage = MessageEditSpec.builder().contentOrNull(prompt).build().withFiles(embeddingFields)
             imageMessage.edit(updatedMessage).subscribe()
         } catch (e: Exception) {
-            logger.error("Error while creating Image $prompt", e)
+            logger.warn("Error while creating Image $prompt")
             val updatedMessage =
                 MessageEditSpec.builder().contentOrNull("Error while creating Image: ${prompt}.\n\n ${e.message}")
                     .build()
