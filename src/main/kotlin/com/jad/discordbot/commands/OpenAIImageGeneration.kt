@@ -3,6 +3,7 @@ package com.jad.discordbot.commands
 import com.fasterxml.jackson.databind.JsonNode
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.MessageCreateFields
+import discord4j.core.spec.MessageEditSpec
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.buffer.DataBuffer
@@ -50,13 +51,17 @@ class OpenAIImageGeneration : Command {
             return
         }
 
+        val imageMessage = messageChannel.createMessage("Creating Image for \"$prompt\"...").block()!!
+
         try {
             val webClient = WebClient.create()
 
             val imageUrlList = getImageUrls(webClient, prompt)
 
             if (imageUrlList.isEmpty()) {
-                messageChannel.createMessage("Error while creating Image.\n\n Please try again.").subscribe()
+                val updatedMessage =
+                    MessageEditSpec.builder().contentOrNull("Error while creating Image.\n\n Please try again.").build()
+                imageMessage.edit(updatedMessage).subscribe()
                 return
             }
 
@@ -73,10 +78,14 @@ class OpenAIImageGeneration : Command {
                 }
             }
 
-            messageChannel.createMessage(prompt).withFiles(embeddingFields).subscribe()
+            val updatedMessage = MessageEditSpec.builder().contentOrNull(prompt).build().withFiles(embeddingFields)
+            imageMessage.edit(updatedMessage).subscribe()
         } catch (e: Exception) {
             logger.error("Error while creating Image $prompt", e)
-            messageChannel.createMessage("Error while creating Image: ${prompt}.\n\n ${e.message}").subscribe()
+            val updatedMessage =
+                MessageEditSpec.builder().contentOrNull("Error while creating Image: ${prompt}.\n\n ${e.message}")
+                    .build()
+            imageMessage.edit(updatedMessage).subscribe()
         }
     }
 
