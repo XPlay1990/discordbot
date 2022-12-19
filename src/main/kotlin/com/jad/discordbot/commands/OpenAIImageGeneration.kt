@@ -22,7 +22,17 @@ import java.io.*
 
 
 @Component
-class OpenAIImageGeneration : Command {
+class OpenAIImageGeneration(
+    @Value("\${openai.api}") private val openAIUrl: String,
+
+    @Value("\${openai.apikey}") private val openAIKey: String,
+
+    @Value("\${openai.imageCount}") private val imageCount: Int = 1,
+
+    @Value("\${openai.badwords}") private val badWords: List<String>,
+
+    @Value("\${resources.images.path}") private val imagePath: String
+) : Command {
     override val commandList: Array<String>
         get() = arrayOf("createimage", "ci")
     override val description: String
@@ -30,25 +40,12 @@ class OpenAIImageGeneration : Command {
     override val priority: Int
         get() = 5
 
-    @Value("\${openai.api}")
-    private val openAIUrl: String = ""
-
-    @Value("\${openai.apikey}")
-    private val openAIKey: String = ""
-
-    @Value("\${openai.imageCount}")
-    private val imageCount: Int = 1
-
-    @Value("\${openai.badwords}")
-    private val badWords = listOf<String>()
-
-    @Value("\${resources.images.path}")
-    private val imagePath: String = ""
-
     override fun handle(event: MessageCreateEvent) {
         val messageChannel = event.message.channel.block()
         val content: String = event.message.content
         val prompt: String = content.split(" ").drop(2).joinToString(" ")
+        logger.info("Creating Images for Prompt: $prompt")
+        logger.info("BadWords: ${badWords.joinToString("; ")}")
 
         if (messageChannel == null) {
             logger.warn("No Channel found for Meme post")
