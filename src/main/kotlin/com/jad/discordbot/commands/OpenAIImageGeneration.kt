@@ -39,7 +39,8 @@ class OpenAIImageGeneration : Command {
     @Value("\${openai.imageCount}")
     private val imageCount: Int = 1
 
-    private final val BAD_WORDS = listOf("kacke", "klo")
+    @Value("\${openai.badwords}")
+    private val badWords = listOf<String>()
 
     @Value("\${resources.images.path}")
     private val imagePath: String = ""
@@ -54,7 +55,7 @@ class OpenAIImageGeneration : Command {
             return
         }
 
-        for (badWord in BAD_WORDS) {
+        for (badWord in badWords) {
             if (prompt.lowercase().contains(badWord)) {
                 val filesToUpload = mutableListOf<MessageCreateFields.File>()
                 filesToUpload.add(
