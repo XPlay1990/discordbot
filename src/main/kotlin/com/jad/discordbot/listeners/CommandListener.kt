@@ -14,33 +14,26 @@ class CommandListener(commands: List<Command>, client: GatewayDiscordClient) {
         val startTime = AtomicReference<Long>()
         val botMention = "<@${client.self.block()!!.id.asString()}>"
 
-        client.on(MessageCreateEvent::class.java)
-            .map { messageCreateEvent: MessageCreateEvent ->
-                startTime.set(System.nanoTime())
-                messageCreateEvent
-            }
-            .filter { messageCreateEvent: MessageCreateEvent ->
-                messageCreateEvent.message.author.map { user -> !user.isBot }.orElse(false)
-            }
-            .filter { messageCreateEvent: MessageCreateEvent ->
-                messageCreateEvent.message.content.startsWith(botMention)
-            }
-            .map { messageCreateEvent: MessageCreateEvent ->
-                val foundCommand = commands.stream()
-                    .filter { command: Command ->
-                        messageCreateEvent.message.content.replace(
-                            botMention,
-                            ""
-                        ).trim().lowercase().startsWith(command.name)
-                    }
-                    .findAny()
-                    .orElse(null) ?: return@map
+        client.on(MessageCreateEvent::class.java).map { messageCreateEvent: MessageCreateEvent ->
+            startTime.set(System.nanoTime())
+            messageCreateEvent
+        }.filter { messageCreateEvent: MessageCreateEvent ->
+            messageCreateEvent.message.author.map { user -> !user.isBot }.orElse(false)
+        }.filter { messageCreateEvent: MessageCreateEvent ->
+            messageCreateEvent.message.content.startsWith(botMention)
+        }.map { messageCreateEvent: MessageCreateEvent ->
+            val foundCommand = commands.stream().filter { command: Command ->
+                command.commandList.contains(
+                    messageCreateEvent.message.content.replace(
+                        botMention, ""
+                    ).trim().lowercase().split(" ")[0]
+                )
+            }.findAny().orElse(null) ?: return@map
 
-                logger.info("foundCommand: ${foundCommand.name}")
-                foundCommand.handle(messageCreateEvent)
-                logger.info("Time taken : ${TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get())} milliseconds.")
-            }
-            .subscribe()
+            logger.info("foundCommand: ${foundCommand.commandList}")
+            foundCommand.handle(messageCreateEvent)
+            logger.info("Time taken : ${TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get())} milliseconds.")
+        }.subscribe()
     }
 
     companion object {

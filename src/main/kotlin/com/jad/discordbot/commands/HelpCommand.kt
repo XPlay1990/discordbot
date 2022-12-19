@@ -25,8 +25,8 @@ import java.util.stream.Collectors
 class HelpCommand(
     private val commands: List<Command>, private val playMusic: PlayMusic, private val randomMeme: RandomMeme
 ) : Command {
-    override val name: String
-        get() = "help"
+    override val commandList: Array<String>
+        get() = arrayOf("help", "h")
     override val description: String
         get() = "Help command"
     override val priority: Int
@@ -36,7 +36,7 @@ class HelpCommand(
         event.message.channel.subscribe { messageChannel: MessageChannel ->
             val embeddedFields = commands.stream().sorted { o1, o2 ->
                 o1.priority.compareTo(o2.priority)
-            }.map { element -> EmbedCreateFields.Field.of(element.name, element.description, false) }
+            }.map { element -> EmbedCreateFields.Field.of(element.commandList.joinToString(" / "), element.description, false) }
                 .collect(Collectors.toList())
 
             val embed: EmbedCreateSpec = EmbedCreateSpec.builder().color(Color.YELLOW).title("Help")
@@ -68,8 +68,7 @@ class HelpCommand(
                 return@on event.reply() // creates warning in log, "Message cannot be empty" -> Discord4j bug
             }.timeout(Duration.ofMinutes(30)) // Timeout after 30 minutes
                 // Handle TimeoutException that will be thrown when the above times out
-                .onErrorResume(TimeoutException::class.java) { _ -> Mono.empty() }
-                .then() //Transform the flux to a mono
+                .onErrorResume(TimeoutException::class.java) { _ -> Mono.empty() }.then() //Transform the flux to a mono
 
             messageChannel.createMessage().withEmbeds(embed)
                 .withComponents(ActionRow.of(joinVoiceButton, playRandomButton, playRandomDEButton, memeButton))

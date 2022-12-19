@@ -15,8 +15,8 @@ class FildonS4 : Command {
 
     @Value("\${resources.images.path}")
     private val imagePath: String = ""
-    override val name: String
-        get() = "fildon"
+    override val commandList: Array<String>
+        get() = arrayOf("fildon")
     override val description: String
         get() = "it's fildon"
     override val priority: Int

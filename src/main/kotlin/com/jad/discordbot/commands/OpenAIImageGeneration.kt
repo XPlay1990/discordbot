@@ -26,8 +26,8 @@ import java.io.PipedOutputStream
 
 @Component
 class OpenAIImageGeneration : Command {
-    override val name: String
-        get() = "createimage"
+    override val commandList: Array<String>
+        get() = arrayOf("createimage", "ci")
     override val description: String
         get() = "returns an AI Generated Image"
     override val priority: Int

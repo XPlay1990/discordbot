@@ -15,8 +15,8 @@ import java.util.stream.Collectors
 
 @Component
 class RandomSoundCommand : Command {
-    override val name: String
-        get() = "random"
+    override val commandList: Array<String>
+        get() = arrayOf("random")
     override val description: String
         get() = "Random Game Sound"
     override val priority: Int

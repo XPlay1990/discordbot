@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component
 
 @Component
 class GRAAAAAAAT : Command {
-    override val name: String
-        get() = "garat"
+    override val commandList: Array<String>
+        get() = arrayOf("garat")
     override val description: String
         get() = "it's garat"
     override val priority: Int

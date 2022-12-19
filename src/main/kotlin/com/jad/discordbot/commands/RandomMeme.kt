@@ -11,8 +11,8 @@ import org.springframework.web.reactive.function.client.WebClient
 
 @Component
 class RandomMeme : Command {
-    override val name: String
-        get() = "meme"
+    override val commandList: Array<String>
+        get() = arrayOf("meme")
     override val description: String
         get() = "returns random meme"
     override val priority: Int

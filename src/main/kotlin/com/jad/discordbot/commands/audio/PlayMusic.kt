@@ -27,16 +27,15 @@ import java.time.Duration
 
 @Component
 class PlayMusic(
-    @Value("\${resources.sounds.path}")
-    private val soundPath: String = "",
+    @Value("\${resources.sounds.path}") private val soundPath: String = "",
     private val audioPlayer: AudioPlayer,
     private val audioPlayerManager: AudioPlayerManager,
     private val customAudioLoadResultHandler: CustomAudioLoadResultHandler
 ) : Command {
     private val subCommands =
         listOf("next", "list", "volume +100", "tot", "vier", "körbe", "random", "fluffy", "garat", "balls")
-    override val name: String
-        get() = "play"
+    override val commandList: Array<String>
+        get() = arrayOf("play")
     override val description: String
         get() = "Plays the Audio for the provided Link\n@R2D2 play https://www.youtube.com/watch?v=dQw4w9WgXcQ\n\nSubcommands:\n${
             subCommands.joinToString(
@@ -184,8 +183,7 @@ class PlayMusic(
             voiceConnection = connection
 
             // The bot itself has a VoiceState; 1 VoiceState signals bot is alone
-            val voiceStateCounter: Publisher<Boolean?> =
-                voiceChannel.voiceStates.count().map { count -> 1L == count }
+            val voiceStateCounter: Publisher<Boolean?> = voiceChannel.voiceStates.count().map { count -> 1L == count }
 
             // After 10 seconds, check if the bot is alone. This is useful if
             // the bot joined alone, but no one else joined since connecting
