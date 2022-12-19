@@ -30,7 +30,8 @@ class PlayMusic(
     @Value("\${resources.sounds.path}") private val soundPath: String = "",
     private val audioPlayer: AudioPlayer,
     private val audioPlayerManager: AudioPlayerManager,
-    private val customAudioLoadResultHandler: CustomAudioLoadResultHandler
+    private val customAudioLoadResultHandler: CustomAudioLoadResultHandler,
+    private val randomFileSelector: RandomFileSelector
 ) : Command {
     private val subCommands =
         listOf("next", "list", "volume +100", "tot", "vier", "körbe", "random", "fluffy", "garat", "balls")
@@ -116,19 +117,19 @@ class PlayMusic(
         }
         if (command[2] == "random") {
             if (command.size == 4) {
-                val randomSoundFileList = RandomFileSelector.getRandomSoundFileList(command[3].toInt())
+                val randomSoundFileList = randomFileSelector.getRandomSoundFileList(command[3].toInt())
                 randomSoundFileList.forEach { element ->
                     audioPlayerManager.loadItem(element.path, customAudioLoadResultHandler)
                 }
                 return true
             }
 
-            val randomSoundFile = RandomFileSelector.getRandomSoundFile()
+            val randomSoundFile = randomFileSelector.getRandomSoundFile()
             audioPlayerManager.loadItem(randomSoundFile.path, customAudioLoadResultHandler)
             return true
         }
         if (command[2] == "randomDE") {
-            val randomSoundFile = RandomFileSelector.getRandomSoundFileDE()
+            val randomSoundFile = randomFileSelector.getRandomSoundFileDE()
             audioPlayerManager.loadItem(randomSoundFile.path, customAudioLoadResultHandler)
             return true
         }

@@ -14,7 +14,7 @@ import java.util.*
 import java.util.stream.Collectors
 
 @Component
-class RandomSoundCommand : Command {
+class RandomSoundCommand(private val randomFileSelector: RandomFileSelector) : Command {
     override val commandList: Array<String>
         get() = arrayOf("random")
     override val description: String
@@ -24,7 +24,7 @@ class RandomSoundCommand : Command {
 
     override fun handle(event: MessageCreateEvent) {
         event.message.channel.subscribe { messageChannel: MessageChannel ->
-            val pickedFile = RandomFileSelector.getRandomSoundFile()
+            val pickedFile = randomFileSelector.getRandomSoundFile()
             val file = MessageCreateFields.File.of(pickedFile.name, pickedFile.inputStream())
 
             messageChannel.createMessage(
