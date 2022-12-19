@@ -10,10 +10,9 @@ import java.util.*
 import java.util.stream.Collectors
 
 @Component
-class RandomFileSelector {
-    @Value("\${resources.sounds.path}")
-    private val soundPath: String = ""
-
+class RandomFileSelector(
+    @Value("\${resources.sounds.path}") private val soundPath: String
+) {
     private var soundFiles: List<Path> = emptyList()
 
     private var soundFilesDE: List<Path> = emptyList()
@@ -29,7 +28,7 @@ class RandomFileSelector {
 
         try {
             soundFilesDE = Files.walk(
-                Path.of("$soundPath/meme_de/")
+                Path.of("$soundPath/meme_de")
             ).filter(Files::isRegularFile).collect(Collectors.toList())
         } catch (e: Exception) {
             logger.error("Error while loading meme_de sound files", e)
