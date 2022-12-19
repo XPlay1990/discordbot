@@ -19,12 +19,13 @@ class RandomFileSelector {
             Path.of(soundPath)
         ).filter(Files::isRegularFile).collect(Collectors.toList())
         private val soundFilesDE = Files.walk(
-            Path.of("soundPath/meme_de/")
+            Path.of("$soundPath/meme_de/")
         ).filter(Files::isRegularFile).collect(Collectors.toList())
 
         fun getRandomSoundFile(): File {
             return File(soundFiles[Random().nextInt(soundFiles.size)].toUri())
         }
+
         fun getRandomSoundFileDE(): File {
             return File(soundFilesDE[Random().nextInt(soundFilesDE.size)].toUri())
         }
