@@ -18,10 +18,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.util.DefaultUriBuilderFactory
 import reactor.core.publisher.Flux
 import reactor.core.scheduler.Schedulers
-import java.io.IOException
-import java.io.InputStream
-import java.io.PipedInputStream
-import java.io.PipedOutputStream
+import java.io.*
 
 
 @Component
@@ -41,6 +38,12 @@ class OpenAIImageGeneration : Command {
 
     @Value("\${openai.imageCount}")
     private val imageCount: Int = 1
+
+    private final val BAD_WORDS = listOf("kacke", "klo")
+
+    @Value("\${resources.images.path}")
+    private val imagePath: String = ""
+
     override fun handle(event: MessageCreateEvent) {
         val messageChannel = event.message.channel.block()
         val content: String = event.message.content
@@ -49,6 +52,19 @@ class OpenAIImageGeneration : Command {
         if (messageChannel == null) {
             logger.warn("No Channel found for Meme post")
             return
+        }
+
+        for (badWord in BAD_WORDS) {
+            if (prompt.lowercase().contains(badWord)) {
+                val filesToUpload = mutableListOf<MessageCreateFields.File>()
+                filesToUpload.add(
+                    MessageCreateFields.File.of(
+                        "busted.jpg", File("$imagePath/busted.jpg").inputStream()
+                    )
+                )
+                messageChannel.createMessage("No Bad Words Allowed!").withFiles(filesToUpload).block()
+                return
+            }
         }
 
         val imageMessage = messageChannel.createMessage("Creating Image for \"$prompt\"...").block()!!
@@ -61,16 +77,16 @@ class OpenAIImageGeneration : Command {
             if (imageUrlList.isEmpty()) {
                 val updatedMessage =
                     MessageEditSpec.builder().contentOrNull("Error while creating Image.\n\n Please try again.").build()
-                imageMessage.edit(updatedMessage).subscribe()
+                imageMessage.edit(updatedMessage).block()
                 return
             }
 
-            val embeddingFields = mutableListOf<MessageCreateFields.File>()
+            val filesToUpload = mutableListOf<MessageCreateFields.File>()
             imageUrlList.forEachIndexed { index, imageUrl ->
                 logger.info("Downloading Image $imageUrl")
                 val imageInputStream = getImageAsInputStream(imageUrl)
                 if (imageInputStream != null) {
-                    embeddingFields.add(
+                    filesToUpload.add(
                         MessageCreateFields.File.of(
                             "$index.jpg", imageInputStream
                         )
@@ -78,14 +94,14 @@ class OpenAIImageGeneration : Command {
                 }
             }
 
-            val updatedMessage = MessageEditSpec.builder().contentOrNull(prompt).build().withFiles(embeddingFields)
-            imageMessage.edit(updatedMessage).subscribe()
+            val updatedMessage = MessageEditSpec.builder().contentOrNull(prompt).build().withFiles(filesToUpload)
+            imageMessage.edit(updatedMessage).block()
         } catch (e: Exception) {
             logger.warn("Error while creating Image $prompt")
             val updatedMessage =
                 MessageEditSpec.builder().contentOrNull("Error while creating Image: ${prompt}.\n\n ${e.message}")
                     .build()
-            imageMessage.edit(updatedMessage).subscribe()
+            imageMessage.edit(updatedMessage).block()
         }
     }
 
