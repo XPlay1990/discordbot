@@ -30,7 +30,7 @@ class CommandListener(commands: List<Command>, client: GatewayDiscordClient) {
                 )
             }.findAny().orElse(null) ?: return@map
 
-            logger.info("foundCommand: ${foundCommand.commandList}")
+            logger.info("foundCommand: ${foundCommand.commandList.joinToString(", ")}")
             foundCommand.handle(messageCreateEvent)
             logger.info("Time taken : ${TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get())} milliseconds.")
         }.subscribe()
