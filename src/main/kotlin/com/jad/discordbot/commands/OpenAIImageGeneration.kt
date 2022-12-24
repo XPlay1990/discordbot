@@ -77,6 +77,9 @@ class OpenAIImageGeneration(
                 imageMessage.edit(updatedMessage).block()
                 return
             }
+            var updatedMessage =
+                MessageEditSpec.builder().contentOrNull(prompt + "\n\n" + imageUrlList.joinToString("\n")).build()
+            imageMessage.edit(updatedMessage).block()
 
             val filesToUpload = mutableListOf<MessageCreateFields.File>()
             imageUrlList.forEachIndexed { index, imageUrl ->
@@ -91,14 +94,18 @@ class OpenAIImageGeneration(
                 }
             }
 
-            val updatedMessage = MessageEditSpec.builder().contentOrNull(prompt).build().withFiles(filesToUpload)
+            updatedMessage = MessageEditSpec.builder().contentOrNull(prompt).build().withFiles(filesToUpload)
             imageMessage.edit(updatedMessage).block()
         } catch (e: Exception) {
             logger.warn("Error while creating Image $prompt")
-            val updatedMessage =
-                MessageEditSpec.builder().contentOrNull("Error while creating Image: ${prompt}.\n\n ${e.message}")
-                    .build()
-            imageMessage.edit(updatedMessage).block()
+            try {
+                val updatedMessage =
+                    MessageEditSpec.builder().contentOrNull("Error while creating Image: ${prompt}.\n\n ${e.message}")
+                        .build()
+                imageMessage.edit(updatedMessage).block()
+            } catch (e: Exception) {
+                logger.warn("Error while updating Image Message")
+            }
         }
     }
 
