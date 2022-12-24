@@ -45,7 +45,6 @@ class OpenAIImageGeneration(
         val content: String = event.message.content
         val prompt: String = content.split(" ").drop(2).joinToString(" ")
         logger.info("Creating Images for Prompt: $prompt")
-        logger.info("BadWords: ${badWords.joinToString("; ")}")
 
         if (messageChannel == null) {
             logger.warn("No Channel found for Meme post")
