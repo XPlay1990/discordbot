@@ -1,39 +1,45 @@
 package com.jad.discordbot.listeners
 
 import com.jad.discordbot.commands.Command
-import discord4j.core.GatewayDiscordClient
-import discord4j.core.event.domain.message.MessageCreateEvent
+import net.dv8tion.jda.api.entities.channel.ChannelType
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
+
 
 @Component
-class CommandListener(commands: List<Command>, client: GatewayDiscordClient) {
-    init {
-        val startTime = AtomicReference<Long>()
-        val botMention = "<@${client.self.block()!!.id.asString()}>"
+class CommandListener(commands: List<Command>) : ListenerAdapter() {
+//    val botMention = "<@${discordClient.selfUser.id}>"
 
-        client.on(MessageCreateEvent::class.java).map { messageCreateEvent: MessageCreateEvent ->
-            startTime.set(System.nanoTime())
-            messageCreateEvent
-        }.filter { messageCreateEvent: MessageCreateEvent ->
-            messageCreateEvent.message.author.map { user -> !user.isBot }.orElse(false)
-        }.filter { messageCreateEvent: MessageCreateEvent ->
-            messageCreateEvent.message.content.startsWith(botMention)
-        }.map { messageCreateEvent: MessageCreateEvent ->
-            val foundCommand = commands.stream().filter { command: Command ->
-                command.commandList.contains(
-                    messageCreateEvent.message.content.replace(
-                        botMention, ""
-                    ).trim().lowercase().split(" ")[0]
-                )
-            }.findAny().orElse(null) ?: return@map
+    override fun onMessageReceived(event: MessageReceivedEvent) {
+        if (event.isFromType(ChannelType.PRIVATE))
+        {
+            System.out.printf("[PM] %s: %s\n", event.author.name,
+                event.message.contentDisplay
+            )
+        }
+        else
+        {
+            System.out.printf("[%s][%s] %s: %s\n", event.guild.name,
+                event.channel.name, event.member?.effectiveName,
+                event.message.contentDisplay
+            )
+        }
+    }
 
-            logger.info("foundCommand: ${foundCommand.commandList.joinToString(", ")}")
-            foundCommand.handle(messageCreateEvent)
-            logger.info("Time taken : ${TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime.get())} milliseconds.")
-        }.subscribe()
+    override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
+        when (event.name) {
+            "ping" -> {
+                val time = System.currentTimeMillis()
+                event.reply("Pong!").setEphemeral(true) // reply or acknowledge
+                    .flatMap { v ->
+                        event.hook.editOriginalFormat("Pong: %d ms", System.currentTimeMillis() - time)
+                    } // then edit original
+                    .queue() // Queue both reply and edit
+            }
+        }
     }
 
     companion object {

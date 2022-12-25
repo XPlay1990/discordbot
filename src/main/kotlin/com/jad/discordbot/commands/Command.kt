@@ -1,6 +1,6 @@
 package com.jad.discordbot.commands
 
-import discord4j.core.event.domain.message.MessageCreateEvent
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import org.slf4j.LoggerFactory
 
 /**
@@ -12,7 +12,7 @@ interface Command {
     val commandList: Array<String>
     val description: String
     val priority: Int
-    fun handle(event: MessageCreateEvent)
+    fun handle(event: MessageReceivedEvent)
 
     companion object {
         private val logger = LoggerFactory.getLogger(this::class.java)

@@ -1,54 +1,36 @@
 package com.jad.discordbot.configuration
 
-import discord4j.core.DiscordClientBuilder
-import discord4j.core.GatewayDiscordClient
-import discord4j.core.`object`.entity.Guild
-import discord4j.core.`object`.entity.channel.GuildChannel
-import discord4j.core.`object`.presence.ClientActivity
-import discord4j.core.`object`.presence.ClientPresence
-import discord4j.gateway.ShardInfo
-import discord4j.rest.RestClient
+import com.jad.discordbot.listeners.CommandListener
+import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.JDABuilder
+import net.dv8tion.jda.api.entities.Activity
+import net.dv8tion.jda.api.interactions.commands.build.Commands
+import net.dv8tion.jda.api.requests.GatewayIntent
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import java.util.stream.Collectors
+import org.springframework.context.annotation.Scope
 
 @Configuration
-class BotConfiguration {
+class BotConfiguration(private val commandListener: CommandListener) {
     @Value("\${discord.botToken}")
     private val botToken: String = ""
 
-    private var gatewayDiscordClient: GatewayDiscordClient? = null
-
     @Bean
-    fun gatewayDiscordClient(): GatewayDiscordClient {
-        if (gatewayDiscordClient != null) {
-            return gatewayDiscordClient as GatewayDiscordClient
-        }
+    @Scope("singleton")
+    fun gatewayDiscordClient(): JDA {
+        val jda = JDABuilder.createDefault(botToken)
+            .setActivity(Activity.listening("@R2D2 help"))
+            .enableIntents(GatewayIntent.MESSAGE_CONTENT)
+            .addEventListeners(commandListener)
+            .build()
 
-        gatewayDiscordClient = DiscordClientBuilder.create(botToken).build()
-            .gateway()
-            .setInitialPresence { _: ShardInfo? ->
-                ClientPresence.online(
-                    ClientActivity.listening("@R2D2 help")
-                )
-            }
-            .login()
-            .block()!!
+        jda.updateCommands().addCommands(
+            Commands.slash("ping", "Calculate ping of the bot"),
+        ).queue()
 
-//        val guildsList = (gatewayDiscordClient as GatewayDiscordClient).guilds.collect(Collectors.toList()).block()
-//        guildsList!!.map { guild: Guild ->
-//            logger.info("---------------- ${guild.name} -------------------")
-//            val channels = guild.channels.collect(Collectors.toList()).block()
-//            channels?.map { channel: GuildChannel -> logger.info("${channel.type.name} ${channel.name} - ${channel.id.asString()}") }
-//        }
-        return gatewayDiscordClient as GatewayDiscordClient
-    }
-
-    @Bean
-    fun discordRestClient(client: GatewayDiscordClient): RestClient {
-        return client.restClient
+        return jda
     }
 
     companion object {

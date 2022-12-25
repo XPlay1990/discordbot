@@ -23,16 +23,8 @@
         <lavaplayer.version>1.3.78</lavaplayer.version>
         <discord4j.version>3.2.3</discord4j.version>
         <spring.admin.version>2.7.7</spring.admin.version>
+        <jda-version>5.0.0-beta.2</jda-version>
     </properties>
-
-    <repositories>
-        <repository>
-            <!-- laravel -->
-            <id>dv8tion</id>
-            <name>m2-dv8tion</name>
-            <url>https://m2.dv8tion.net/releases</url>
-        </repository>
-    </repositories>
 
     <dependencies>
         <dependency>
@@ -90,22 +82,15 @@
         </dependency>
 
         <dependency>
-            <groupId>com.sedmelluq</groupId>
-            <artifactId>lavaplayer</artifactId>
-            <version>${lavaplayer.version}</version>
+            <groupId>net.dv8tion</groupId>
+            <artifactId>JDA</artifactId>
+            <version>5.0.0-beta.2</version>
         </dependency>
-
-        <dependency>
-            <groupId>com.discord4j</groupId>
-            <artifactId>discord4j-core</artifactId>
-            <version>${discord4j.version}</version>
-        </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>de.codecentric</groupId>-->
-<!--            <artifactId>spring-boot-admin-starter-client</artifactId>-->
-<!--            <version>${spring.admin.version}</version>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>de.codecentric</groupId>-->
+        <!--            <artifactId>spring-boot-admin-starter-client</artifactId>-->
+        <!--            <version>${spring.admin.version}</version>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
@@ -122,7 +107,9 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <image>
-                        <tags>${dockerRegistry}/${project.artifactId}:${project.version},${dockerRegistry}/${project.artifactId}:latest</tags>
+                        <tags>
+                            ${dockerRegistry}/${project.artifactId}:${project.version},${dockerRegistry}/${project.artifactId}:latest
+                        </tags>
                     </image>
                 </configuration>
                 <executions>
