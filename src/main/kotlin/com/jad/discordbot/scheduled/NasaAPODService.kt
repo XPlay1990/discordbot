@@ -13,7 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient
 
 //provides picture of the day from NASA
 @Component
-class NasaAPODService(private val gatewayDiscordClient: GatewayDiscordClient, private val botUtils: BotUtils) {
+class NasaAPODService(private val botUtils: BotUtils) {
     @Value("\${nasa.api}")
     private val nasaUrl: String = ""
 
