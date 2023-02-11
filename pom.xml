@@ -135,11 +135,10 @@
                         <tags>
                             ${dockerRegistry}/${project.artifactId}:${project.version},${dockerRegistry}/${project.artifactId}:latest
                         </tags>
+                        <builder>gcr.io/paketo-buildpacks/builder:base</builder>
                         <buildpacks>
-                            <buildpack>gcr.io/paketo-buildpacks/oracle</buildpack>
-                            <buildpack>gcr.io/paketo-buildpacks/spring-boot</buildpack>
-<!--                            <buildpack>gcr.io/paketo-buildpacks/adoptium</buildpack>-->
-<!--                            <buildpack>gcr.io/paketo-buildpacks/java</buildpack>-->
+                            <buildpack>docker://gcr.io/paketo-buildpacks/adoptium</buildpack>
+                            <buildpack>docker://gcr.io/paketo-buildpacks/java</buildpack>
                         </buildpacks>
                     </image>
                 </configuration>
