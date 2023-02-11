@@ -52,6 +52,7 @@ class OpenAIImageGeneration(
         }
 
         for (badWord in badWords) {
+            logger.info("Comparing $prompt to $badWord")
             if (prompt.lowercase().contains(badWord)) {
                 val filesToUpload = mutableListOf<MessageCreateFields.File>()
                 filesToUpload.add(
