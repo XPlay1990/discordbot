@@ -137,8 +137,7 @@
                         </tags>
                         <builder>gcr.io/paketo-buildpacks/builder:base</builder>
                         <buildpacks>
-                            <buildpack>docker://gcr.io/paketo-buildpacks/adoptium</buildpack>
-                            <buildpack>docker://gcr.io/paketo-buildpacks/java</buildpack>
+                            <buildpack>docker://gcr.io/paketo-buildpacks/oracle</buildpack>
                         </buildpacks>
                     </image>
                 </configuration>
