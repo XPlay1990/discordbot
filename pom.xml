@@ -135,19 +135,9 @@
                         <tags>
                             ${dockerRegistry}/${project.artifactId}:${project.version},${dockerRegistry}/${project.artifactId}:latest
                         </tags>
-                        <builder>gcr.io/paketo-buildpacks/builder:base</builder>
-                        <buildpacks>
-                            <buildpack>docker://gcr.io/paketo-buildpacks/oracle</buildpack>
-                        </buildpacks>
+                        <builder>paketobuildpacks/builder:full</builder>
                     </image>
                 </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>build-info</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
@@ -170,5 +160,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
