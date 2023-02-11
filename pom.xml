@@ -137,6 +137,7 @@
                         </tags>
                         <buildpacks>
                             <buildpack>gcr.io/paketo-buildpacks/oracle</buildpack>
+                            <buildpack>gcr.io/paketo-buildpacks/spring-boot</buildpack>
 <!--                            <buildpack>gcr.io/paketo-buildpacks/adoptium</buildpack>-->
 <!--                            <buildpack>gcr.io/paketo-buildpacks/java</buildpack>-->
                         </buildpacks>
