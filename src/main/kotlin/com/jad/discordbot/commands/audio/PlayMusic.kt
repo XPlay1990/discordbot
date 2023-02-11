@@ -19,6 +19,8 @@ import discord4j.voice.VoiceConnection
 import org.reactivestreams.Publisher
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.retry.annotation.Backoff
+import org.springframework.retry.annotation.Retryable
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import org.springframework.util.ResourceUtils
@@ -48,6 +50,7 @@ class PlayMusic(
 
     private var voiceConnection: VoiceConnection? = null
 
+    @Retryable(value = [Exception::class], maxAttempts = 3, backoff = Backoff(delay = 500))
     override fun handle(event: MessageCreateEvent) {
         val content: String = event.message.content
         val command: List<String> = content.split(" ")
@@ -63,6 +66,7 @@ class PlayMusic(
 
         if (handleSubCommands(command)) return
 
+        logger.info("Loading audio item: ${command[2]}")
         audioPlayerManager.loadItem(command[2], customAudioLoadResultHandler)
     }
 

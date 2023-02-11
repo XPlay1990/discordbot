@@ -46,5 +46,8 @@ logging:
 #      sedmelluq:
 #        discord:
 #          debug
+  logback:
+    rollingpolicy:
+      max-history: 1000000
   file:
     name: logs/Discord_Bot.log
