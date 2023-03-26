@@ -20,6 +20,8 @@ import java.io.*
 class TextCompletion(
     @Value("\${openai.api.baseUrl}") private val openAIUrl: String,
 
+    @Value("\${openai.chat.model}") private val openAIModel: String,
+
     @Value("\${openai.apikey}") private val openAIKey: String,
 
     @Value("\${openai.badwords}") private val badWords: List<String>,
@@ -73,7 +75,7 @@ class TextCompletion(
             }
 
             val updatedMessage =
-                MessageEditSpec.builder().contentOrNull(responseList.joinToString("\n")).build()
+                MessageEditSpec.builder().contentOrNull(responseList.joinToString("\n") + "\n\n // Powered by $openAIModel").build()
             chatMessage.edit(updatedMessage).block()
         } catch (e: Exception) {
             logger.warn("Error while creating chat message for $prompt")
@@ -89,7 +91,7 @@ class TextCompletion(
 
     private fun getResponseMessage(webClient: WebClient, prompt: String): ArrayList<String> {
         val message = Message(prompt)
-        val messageBody = MessageBody(listOf(message))
+        val messageBody = MessageBody(listOf(message), openAIModel)
 
         logger.warn("message.role")
         logger.warn(message.role)
@@ -113,7 +115,7 @@ class TextCompletion(
     }
 
 
-    private class MessageBody(val messages: List<Message>, val model: String = "gpt-3.5-turbo")
+    private class MessageBody(val messages: List<Message>, val model: String)
     private class Message(val content: String, val role: String = "user")
     companion object {
         private val logger = LoggerFactory.getLogger(this::class.java)
