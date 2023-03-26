@@ -37,7 +37,7 @@ class TextCompletion(
     override val commandList: Array<String>
         get() = arrayOf("chat", "c")
     override val description: String
-        get() = "Chat with OpenAI $openAIModel"
+        get() = "Chat with OpenAI $openAIModel\nMessage History is stored for 5 min\nType '@R2D2 chat clear' to clear your message history"
     override val priority: Int
         get() = 5
 
