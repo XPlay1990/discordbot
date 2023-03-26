@@ -1,6 +1,8 @@
 package com.jad.discordbot.commands.openai
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.ObjectWriter
 import com.jad.discordbot.commands.Command
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.MessageCreateFields
@@ -14,6 +16,7 @@ import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
 import java.io.*
+import java.util.*
 
 
 @Component
@@ -28,10 +31,13 @@ class TextCompletion(
 
     @Value("\${resources.images.path}") private val imagePath: String
 ) : Command {
+
+    private val messageStore = HashMap<String, MutableList<StoredMessage>>()
+
     override val commandList: Array<String>
         get() = arrayOf("chat", "c")
     override val description: String
-        get() = "Chat with GPT-3.5"
+        get() = "Chat with OpenAI $openAIModel"
     override val priority: Int
         get() = 5
 
@@ -39,10 +45,16 @@ class TextCompletion(
         val messageChannel = event.message.channel.block()
         val content: String = event.message.content
         val prompt: String = content.split(" ").drop(2).joinToString(" ")
+        if (prompt == "clear") {
+            messageStore.remove(event.message.author.get().id.asString())
+            messageChannel?.createMessage("Chat history cleared")?.block()
+            return
+        }
+
         logger.info("Creating chat response for Prompt: $prompt")
 
         if (messageChannel == null) {
-            logger.warn("No Channel found for Meme post")
+            logger.warn("No Channel found for Chat response")
             return
         }
 
@@ -64,7 +76,9 @@ class TextCompletion(
         try {
             val webClient = WebClient.create()
 
-            val responseList = getResponseMessage(webClient, prompt)
+            val messageStoreForUser = prepareMessageStoreForUser(event, prompt)
+
+            val responseList = getResponseMessage(webClient, messageStoreForUser)
 
             if (responseList.isEmpty()) {
                 val updatedMessage =
@@ -74,8 +88,10 @@ class TextCompletion(
                 return
             }
 
-            val updatedMessage =
-                MessageEditSpec.builder().contentOrNull(responseList.joinToString("\n") + "\n\n // Powered by $openAIModel").build()
+            writeMessageStoreForUser(responseList, messageStoreForUser, event)
+
+            val responseMessage = responseList.joinToString("\n") { message -> message.content }
+            val updatedMessage = MessageEditSpec.builder().contentOrNull(responseMessage).build()
             chatMessage.edit(updatedMessage).block()
         } catch (e: Exception) {
             logger.warn("Error while creating chat message for $prompt")
@@ -89,12 +105,40 @@ class TextCompletion(
         }
     }
 
-    private fun getResponseMessage(webClient: WebClient, prompt: String): ArrayList<String> {
-        val message = Message(prompt)
-        val messageBody = MessageBody(listOf(message), openAIModel)
+    private fun writeMessageStoreForUser(
+        responseList: ArrayList<Message>, messageStoreForUser: MutableList<StoredMessage>, event: MessageCreateEvent
+    ) {
+        for (message in responseList) {
+            messageStoreForUser.add(StoredMessage(Date(), Message(message.content, message.role)))
+        }
+        messageStore[event.message.author.get().id.asString()] = messageStoreForUser
+    }
 
-        logger.warn("message.role")
-        logger.warn(message.role)
+    private fun prepareMessageStoreForUser(
+        event: MessageCreateEvent, prompt: String
+    ): MutableList<StoredMessage> {
+        var messageStoreForUser = messageStore[event.message.author.get().id.asString()]
+        if (messageStoreForUser == null) {
+            messageStoreForUser = mutableListOf()
+        }
+        //check if last message is older than 5 minutes, if yes -> reset List
+        if (messageStoreForUser.isNotEmpty() && messageStoreForUser.last().creationDate.time + 300000 < Date().time) {
+            messageStoreForUser = mutableListOf()
+        }
+        messageStoreForUser.add(StoredMessage(Date(), Message(prompt)))
+        return messageStoreForUser
+    }
+
+    private fun getResponseMessage(
+        webClient: WebClient, storedMessageList: MutableList<StoredMessage>
+    ): ArrayList<Message> {
+        val messageContent = ArrayList<Message>()
+        for (storedMessage in storedMessageList) {
+            messageContent.add(storedMessage.message)
+        }
+        val messageBody = MessageBody(messageContent, openAIModel)
+
+        logger.debug("Sending request to OpenAI: ${objectWriter.writeValueAsString(messageBody)})}")
 
         val jsonFlux = webClient.post().uri("$openAIUrl/chat/completions").header("Authorization", "Bearer $openAIKey")
             .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(messageBody)).retrieve()
@@ -104,11 +148,13 @@ class TextCompletion(
 
         val jsonResponse = jsonFlux.blockLast()
 
-        val responseList = ArrayList<String>()
-        jsonResponse?.get("choices")?.forEachIndexed { index, dataElement ->
-            val chatResponse = dataElement.get("message")?.get("content")?.asText()
+        val responseList = ArrayList<Message>()
+        jsonResponse?.get("choices")?.forEach { dataElement ->
+            val message = dataElement.get("message")
+            val role = message.get("role").asText()
+            val chatResponse = message.get("content").asText()
             if (chatResponse != null) {
-                responseList.add(chatResponse)
+                responseList.add(Message(chatResponse, role))
             }
         }
         return responseList
@@ -117,7 +163,11 @@ class TextCompletion(
 
     private class MessageBody(val messages: List<Message>, val model: String)
     private class Message(val content: String, val role: String = "user")
+
+    private class StoredMessage(val creationDate: Date, val message: Message)
+
     companion object {
         private val logger = LoggerFactory.getLogger(this::class.java)
+        var objectWriter: ObjectWriter = ObjectMapper().writer().withDefaultPrettyPrinter()
     }
 }
