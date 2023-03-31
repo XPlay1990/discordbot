@@ -30,9 +30,37 @@ spring:
   boot:
     admin:
       client:
-        url: http://localhost:9021
+        url: adminserver
         username: admin
         password: password
+        instance:
+          metadata:
+#            user:
+#              name: admin
+#              password: password
+  #            user.timezone: ${user.timezone}
+            java.version: ${java.version}
+            java.vendor: ${java.vendor}
+            java.vm.name: ${java.vm.name}
+            java.vm.version: ${java.vm.version}
+            java.vm.vendor: ${java.vm.vendor}
+            os.name: ${os.name}
+            os.arch: ${os.arch}
+            os.version: ${os.version}
+            user.language: ${user.language}
+            user.country: ${user.country}
+            user.timezone: ${user.timezone}
+            user.name: ${user.name}
+            user.home: ${user.home}
+            user.dir: ${user.dir}
+            java.io.tmpdir: ${java.io.tmpdir}
+            java.class.path: ${java.class.path}
+            java.library.path: ${java.library.path}
+            java.home: ${java.home}
+            file.encoding: ${file.encoding}
+            file.separator: ${file.separator}
+            path.separator: ${path.separator}
+            line.separator: ${line.separator}
   task:
     scheduling:
       pool:
