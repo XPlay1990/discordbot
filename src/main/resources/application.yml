@@ -19,7 +19,7 @@ management:
       show-details: always
 spring:
   application:
-    name: Discord Bot
+    name: discord-bot
   servlet:
     multipart:
       file-size-threshold: 2KB
