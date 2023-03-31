@@ -30,7 +30,7 @@ spring:
   boot:
     admin:
       client:
-        url: adminserver
+        url: localhost:8080
         username: admin
         password: password
         instance:
@@ -65,6 +65,13 @@ spring:
     scheduling:
       pool:
         size: 2
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    service-url:
+      defaultZone: http://localhost:9021/eureka/
 
 logging:
   level:
