@@ -1,6 +1,7 @@
 package com.jad.discordbot.commands.openai
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.jad.discordbot.commands.Command
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.MessageCreateFields
@@ -157,9 +158,12 @@ class ImageGeneration(
         return isPipe
     }
 
-    private class MessageBody(val prompt: String, val n: Int, val size: String = "1024x1024")
+    private class MessageBody(
+        val prompt: String, val n: Int, val size: String = "1024x1024", val model: String = "dall-e-3"
+    )
 
     companion object {
         private val logger = LoggerFactory.getLogger(this::class.java)
+        private val objectMapper = ObjectMapper()
     }
 }
