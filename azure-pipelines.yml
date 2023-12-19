@@ -12,9 +12,9 @@ pool:
 steps:
   #install jdk 21
 - bash: 'wget --no-check-certificate -c --header "Cookie: oraclelicense=accept-securebackup-cookie" https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.tar.gz '
-  displayName: 'Bash Script'
+  displayName: 'Download Oracle JDK 21'
 - task: JavaToolInstaller@0
-  displayName: 'Use Java 21'
+  displayName: 'Install JDK'
   inputs:
     versionSpec: 21
     jdkArchitectureOption: x64

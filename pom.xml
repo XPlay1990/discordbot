@@ -169,7 +169,6 @@
                         <tags>
                             ${dockerRegistry}/${project.artifactId}:${project.version},${dockerRegistry}/${project.artifactId}:latest
                         </tags>
-                        <builder>paketobuildpacks/builder:base</builder>
                     </image>
                 </configuration>
                 <executions>
