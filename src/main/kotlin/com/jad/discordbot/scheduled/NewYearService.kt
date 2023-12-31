@@ -24,17 +24,9 @@ class NewYearService(private val botUtils: BotUtils) {
 
         val botChannel = botUtils.getMainChannel()
 
-        val embed: EmbedCreateSpec = EmbedCreateSpec.builder()
-            .title("A wild 2023 appears!")
-            .description(
-                "2022 ist vorbei - Zeit für ein neues Jahr!" +
-                        "\n Ich hoffe ihr blickt auf ein erfolgreiches und spannendes Jahr zurück und genießt die Zeit mit euren Liebsten." +
-                        "\n\n Sogar Ash ist mittlerweile Pokemon Meister - also gibt es im neuen Jahr keine Ausreden. " +
-                        "\n Erfüllt euch eure Träume und Wünsche und habt eine gute Zeit dabei :)"
-            )
-            .footer("Frohes neues Jahr euch allen!\n Jan", null)
-            .image(pictureUrl)
-            .build()
+        val embed: EmbedCreateSpec = EmbedCreateSpec.builder().title("A wild 2024 appears!").description(
+                "Happy new Year!"
+            ).footer("Frohes neues Jahr euch allen!\n Jan", null).image(pictureUrl).build()
 
         botChannel.createMessage().withEmbeds(embed).block()
     }
