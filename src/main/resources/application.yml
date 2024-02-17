@@ -85,5 +85,4 @@ logging:
     rollingpolicy:
       max-history: 1000000
   file:
-    path: logs
-    name: Discord_Bot.log
+    name: logs/Discord_Bot.log
