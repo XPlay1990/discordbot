@@ -11,22 +11,22 @@ pool:
 
 steps:
   #install jdk 21
-- bash: 'wget --no-check-certificate -c --header "Cookie: oraclelicense=accept-securebackup-cookie" https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.tar.gz '
-  displayName: 'Download Oracle JDK 21'
+- bash: 'wget --no-check-certificate -c --header "Cookie: oraclelicense=accept-securebackup-cookie" https://download.oracle.com/java/22/latest/jdk-22_linux-x64_bin.tar.gz'
+  displayName: 'Download Oracle JDK 22'
 - task: JavaToolInstaller@0
   displayName: 'Install JDK'
   inputs:
-    versionSpec: 21
+    versionSpec: 22
     jdkArchitectureOption: x64
     jdkSourceOption: LocalDirectory
-    jdkFile: '$(build.sourcesdirectory)/jdk-21_linux-x64_bin.tar.gz'
-    jdkDestinationDirectory: '$(agent.toolsDirectory)/jdk21'
+    jdkFile: '$(build.sourcesdirectory)/jdk-22_linux-x64_bin.tar.gz'
+    jdkDestinationDirectory: '$(agent.toolsDirectory)/jdk22'
 
 - task: Maven@3
   inputs:
     mavenPomFile: 'pom.xml'
     javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.21'
+    jdkVersionOption: '1.22'
     jdkArchitectureOption: 'x64'
     publishJUnitResults: true
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
