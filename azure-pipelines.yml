@@ -22,16 +22,17 @@ steps:
     jdkFile: '$(build.sourcesdirectory)/jdk-23_linux-x64_bin.tar.gz'
     jdkDestinationDirectory: '$(agent.toolsDirectory)/jdk23'
 
-- task: Maven@3
+- task: Maven@4
   inputs:
     mavenPomFile: 'pom.xml'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.23'
-    jdkArchitectureOption: 'x64'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
     goals: 'spring-boot:build-image -DskipTests'
-    mavenOptions: '-Xmx3072m'
+    publishJUnitResults: false
+    javaHomeOption: 'JDKVersion'
+    mavenVersionOption: 'Default'
+    mavenAuthenticateFeed: false
+    effectivePomSkip: false
+    sonarQubeRunAnalysis: false
+
 - task: PowerShell@2
   inputs:
     targetType: 'inline'
