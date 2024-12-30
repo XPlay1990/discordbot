@@ -15,7 +15,6 @@ class BotUtils(private val gatewayDiscordClient: GatewayDiscordClient) {
     @Value("\${bot.mainChannelId}")
     private val mainChannelId: String = ""
 
-
     fun getBotChannel(): MessageChannel {
         return gatewayDiscordClient.getChannelById(Snowflake.of(botChannelId)).block()!! as MessageChannel
     }

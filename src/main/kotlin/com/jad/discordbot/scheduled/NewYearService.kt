@@ -10,11 +10,20 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.Year
 
-//provides picture of the day from NASA
+//provides new years message
 @Component
 class NewYearService(private val botUtils: BotUtils) {
+    @Value("\${newYear.title}")
+    private val title: String = ""
+
+    @Value("\${newYear.message}")
+    private val message: String = ""
+
     @Value("\${newYear.picture}")
     private val pictureUrl: String = ""
+
+    @Value("\${newYear.footer}")
+    private val footer: String = ""
 
     @Scheduled(cron = "\${newYear.cron}", zone = "Europe/Berlin")
     @Retryable(value = [Exception::class], maxAttempts = 2, backoff = Backoff(delay = 1000))
@@ -24,9 +33,9 @@ class NewYearService(private val botUtils: BotUtils) {
 
         val botChannel = botUtils.getMainChannel()
 
-        val embed: EmbedCreateSpec = EmbedCreateSpec.builder().title("A wild 2025 appears!").description(
-                "Happy new Year!"
-            ).footer("Frohes neues Jahr euch allen!\n Jan", null).image(pictureUrl).build()
+        val embed: EmbedCreateSpec = EmbedCreateSpec.builder().title(title).description(
+            message
+        ).footer(footer, null).image(pictureUrl).build()
 
         botChannel.createMessage().withEmbeds(embed).block()
     }
