@@ -29,7 +29,6 @@ class NewYearService(private val botUtils: BotUtils) {
     @Retryable(value = [Exception::class], maxAttempts = 2, backoff = Backoff(delay = 1000))
     fun postNewYearMessage() {
         logger.info("Posting new year message")
-        logger.info("Current year: ${Year.now().value}, last year: ${Year.now().value - 1}")
 
         val botChannel = botUtils.getMainChannel()
 
