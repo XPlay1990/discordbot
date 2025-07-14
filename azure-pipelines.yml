@@ -11,16 +11,16 @@ pool:
 
 steps:
   #install jdk
-- bash: 'wget --no-check-certificate -c --header "Cookie: oraclelicense=accept-securebackup-cookie" https://download.oracle.com/java/23/latest/jdk-23_linux-x64_bin.tar.gz'
-  displayName: 'Download Oracle JDK 23'
+- bash: 'wget --no-check-certificate -c --header "Cookie: oraclelicense=accept-securebackup-cookie" https://download.java.net/java/GA/jdk24.0.1/24a58e0e276943138bf3e963e6291ac2/9/GPL/openjdk-24.0.1_linux-x64_bin.tar.gz'
+  displayName: 'Download Oracle JDK 24'
 - task: JavaToolInstaller@0
   displayName: 'Install JDK'
   inputs:
-    versionSpec: 23
+    versionSpec: 24
     jdkArchitectureOption: x64
     jdkSourceOption: LocalDirectory
-    jdkFile: '$(build.sourcesdirectory)/jdk-23_linux-x64_bin.tar.gz'
-    jdkDestinationDirectory: '$(agent.toolsDirectory)/jdk23'
+    jdkFile: '$(build.sourcesdirectory)/openjdk-24.0.1_linux-x64_bin.tar.gz'
+    jdkDestinationDirectory: '$(agent.toolsDirectory)/jdk24'
 
 - task: Maven@4
   inputs:
