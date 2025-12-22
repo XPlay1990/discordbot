@@ -1,6 +1,5 @@
 package com.jad.discordbot.commands.openai
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jad.discordbot.commands.Command
 import discord4j.core.event.domain.message.MessageCreateEvent
@@ -20,6 +19,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.util.DefaultUriBuilderFactory
 import reactor.core.publisher.Flux
 import reactor.core.scheduler.Schedulers
+import tools.jackson.databind.node.ObjectNode
 import java.io.*
 
 
@@ -100,14 +100,11 @@ class ImageGeneration(
             imageMessage.edit(updatedMessage).block()
         } catch (e: Exception) {
             logger.warn("Error while creating Image $prompt")
-            try {
-                val updatedMessage =
-                    MessageEditSpec.builder().contentOrNull("Error while creating Image: ${prompt}.\n\n ${e.message}")
-                        .build()
-                imageMessage.edit(updatedMessage).block()
-            } catch (e: Exception) {
-                logger.warn("Error while updating Image Message")
-            }
+            val updatedMessage =
+                MessageEditSpec.builder().contentOrNull("Error while creating Image: ${prompt}.\n\n ${e.message}")
+                    .build()
+            imageMessage.edit(updatedMessage).block()
+            throw e
         }
     }
 
@@ -117,7 +114,7 @@ class ImageGeneration(
                 .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(MessageBody(prompt, imageCount)))
                 .retrieve().onStatus({ statusCode: HttpStatusCode -> statusCode.isError }) { response: ClientResponse ->
                     response.bodyToMono(String::class.java).map { IllegalStateException(it) }
-                }.bodyToFlux(JsonNode::class.java)
+                }.bodyToFlux(ObjectNode::class.java)
 
         val jsonResponse = jsonFlux.blockLast()
 

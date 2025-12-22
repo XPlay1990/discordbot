@@ -1,6 +1,5 @@
 package com.jad.discordbot.commands.openai
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectWriter
 import com.jad.discordbot.commands.Command
@@ -15,7 +14,8 @@ import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
-import java.io.*
+import tools.jackson.databind.node.ObjectNode
+import java.io.File
 import java.util.*
 
 
@@ -95,13 +95,10 @@ class TextCompletion(
             chatMessage.edit(updatedMessage).block()
         } catch (e: Exception) {
             logger.warn("Error while creating chat message for $prompt")
-            try {
-                val updatedMessage = MessageEditSpec.builder()
-                    .contentOrNull("Error while creating chat message for: ${prompt}.\n\n ${e.message}").build()
-                chatMessage.edit(updatedMessage).block()
-            } catch (e: Exception) {
-                logger.warn("Error while updating chat Message")
-            }
+            val updatedMessage = MessageEditSpec.builder()
+                .contentOrNull("Error while creating chat message for: ${prompt}.\n\n ${e.message}").build()
+            chatMessage.edit(updatedMessage).block()
+            throw e
         }
     }
 
@@ -144,7 +141,7 @@ class TextCompletion(
             .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(messageBody)).retrieve()
             .onStatus({ statusCode: HttpStatusCode -> statusCode.isError }) { response: ClientResponse ->
                 response.bodyToMono(String::class.java).map { IllegalStateException(it) }
-            }.bodyToFlux(JsonNode::class.java)
+            }.bodyToFlux(ObjectNode::class.java)
 
         val jsonResponse = jsonFlux.blockLast()
 

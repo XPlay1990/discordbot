@@ -1,6 +1,5 @@
 package com.jad.discordbot.scheduled
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.jad.discordbot.util.BotUtils
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -8,6 +7,8 @@ import org.springframework.resilience.annotation.Retryable
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.bodyToMono
+import tools.jackson.databind.node.ObjectNode
 
 //provides picture of the day from NASA
 @Component
@@ -24,9 +25,9 @@ class NasaAPODService(private val botUtils: BotUtils) {
     fun getPictureOfTheDay() {
         logger.info("Posting Picture of the Day")
         //fetch picture of the day from NASA
-        val jsonFlux = WebClient.create().get().uri(nasaUrl + apiKey).retrieve().bodyToFlux(JsonNode::class.java)
+        val jsonMono = WebClient.create().get().uri(nasaUrl + apiKey).retrieve().bodyToMono<ObjectNode>()
+        val jsonResponse = jsonMono.block()
 
-        val jsonResponse = jsonFlux.blockLast()
         val url = getUrlFromRequest(jsonResponse)
 
         //post picture of the day to discord
@@ -38,7 +39,7 @@ class NasaAPODService(private val botUtils: BotUtils) {
         ).subscribe()
     }
 
-    private fun getUrlFromRequest(jsonResponse: JsonNode?): String {
+    private fun getUrlFromRequest(jsonResponse: ObjectNode?): String {
         var url = jsonResponse!!.get("hdurl")?.asText()
         if (url == null) {
             url = jsonResponse.get("url").asText()!!

@@ -1,6 +1,5 @@
 package com.jad.discordbot.commands
 
-import com.fasterxml.jackson.databind.JsonNode
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.`object`.entity.channel.MessageChannel
 import discord4j.core.spec.EmbedCreateSpec
@@ -8,6 +7,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import tools.jackson.databind.node.ObjectNode
 
 @Component
 class RandomMeme : Command {
@@ -33,7 +33,7 @@ class RandomMeme : Command {
     }
 
     fun sendMeme(messageChannel: MessageChannel) {
-        val jsonFlux = WebClient.create().get().uri(memeUrl).retrieve().bodyToFlux(JsonNode::class.java)
+        val jsonFlux = WebClient.create().get().uri(memeUrl).retrieve().bodyToFlux(ObjectNode::class.java)
 
         val jsonResponse = jsonFlux.blockLast()
 
