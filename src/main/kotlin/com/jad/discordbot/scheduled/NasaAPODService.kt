@@ -2,11 +2,9 @@ package com.jad.discordbot.scheduled
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.jad.discordbot.util.BotUtils
-import discord4j.core.GatewayDiscordClient
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.retry.annotation.Backoff
-import org.springframework.retry.annotation.Retryable
+import org.springframework.resilience.annotation.Retryable
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
@@ -22,7 +20,7 @@ class NasaAPODService(private val botUtils: BotUtils) {
 
     // Every day at 23:30
     @Scheduled(cron = "\${nasa.cron}", zone = "Europe/Berlin")
-    @Retryable(value = [Exception::class], maxAttempts = 2, backoff = Backoff(delay = 1000))
+    @Retryable(value = [Exception::class])
     fun getPictureOfTheDay() {
         logger.info("Posting Picture of the Day")
         //fetch picture of the day from NASA

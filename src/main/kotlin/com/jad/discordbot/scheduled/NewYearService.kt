@@ -4,11 +4,9 @@ import com.jad.discordbot.util.BotUtils
 import discord4j.core.spec.EmbedCreateSpec
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.retry.annotation.Backoff
-import org.springframework.retry.annotation.Retryable
+import org.springframework.resilience.annotation.Retryable
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import java.time.Year
 
 //provides new years message
 @Component
@@ -26,7 +24,7 @@ class NewYearService(private val botUtils: BotUtils) {
     private val footer: String = ""
 
     @Scheduled(cron = "\${newYear.cron}", zone = "Europe/Berlin")
-    @Retryable(value = [Exception::class], maxAttempts = 2, backoff = Backoff(delay = 1000))
+    @Retryable(value = [Exception::class])
     fun postNewYearMessage() {
         logger.info("Posting new year message")
 

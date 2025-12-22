@@ -12,15 +12,15 @@ import discord4j.core.GatewayDiscordClient
 import discord4j.core.event.domain.VoiceStateUpdateEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.`object`.VoiceState
+import discord4j.core.`object`.entity.channel.AudioChannel
 import discord4j.core.`object`.entity.channel.VoiceChannel
-import discord4j.core.spec.VoiceChannelJoinSpec
+import discord4j.core.spec.AudioChannelJoinSpec
 import discord4j.voice.AudioProvider
 import discord4j.voice.VoiceConnection
 import org.reactivestreams.Publisher
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.retry.annotation.Backoff
-import org.springframework.retry.annotation.Retryable
+import org.springframework.resilience.annotation.Retryable
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import org.springframework.util.ResourceUtils
@@ -50,7 +50,7 @@ class PlayMusic(
 
     private var voiceConnection: VoiceConnection? = null
 
-    @Retryable(value = [Exception::class], maxAttempts = 3, backoff = Backoff(delay = 500))
+    @Retryable(value = [Exception::class])
     override fun handle(event: MessageCreateEvent) {
         val content: String = event.message.content
         val command: List<String> = content.split(" ")
@@ -167,7 +167,7 @@ class PlayMusic(
             return
         }
 
-        val voiceChannel: VoiceChannel? = voiceState.channel.block()
+        val voiceChannel: AudioChannel? = voiceState.channel.block()
         if (voiceChannel == null) {
             logger.info("No channel found. Not connecting.")
             return
@@ -180,15 +180,15 @@ class PlayMusic(
         joinVoiceChannel(client.getChannelById(Snowflake.of(DEFAULT_VOICE_CHANNEL_ID)).block()!! as VoiceChannel)
     }
 
-    fun joinVoiceChannel(voiceChannel: VoiceChannel) {
+    fun joinVoiceChannel(voiceChannel: AudioChannel) {
         val provider: AudioProvider = LavaPlayerAudioProvider(audioPlayer)
-        val voiceChannelJoinSpec = VoiceChannelJoinSpec.create().withProvider(provider)
+        val voiceChannelJoinSpec = AudioChannelJoinSpec.create().withProvider(provider)
         voiceChannel.join(voiceChannelJoinSpec).flatMap { connection ->
             //set connection for disconnect command
             voiceConnection = connection
 
             // The bot itself has a VoiceState; 1 VoiceState signals bot is alone
-            val voiceStateCounter: Publisher<Boolean?> = voiceChannel.voiceStates.count().map { count -> 1L == count }
+            val voiceStateCounter: Publisher<Boolean> = voiceChannel.voiceStates.count().map { count -> 1L == count }
 
             // After 10 seconds, check if the bot is alone. This is useful if
             // the bot joined alone, but no one else joined since connecting
