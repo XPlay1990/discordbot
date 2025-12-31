@@ -2,6 +2,7 @@ package com.jad.discordbot.commands.openai
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jad.discordbot.commands.Command
+import com.jad.discordbot.util.config.OpenAiProperties
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.MessageCreateFields
 import discord4j.core.spec.MessageEditSpec
@@ -25,13 +26,7 @@ import java.io.*
 
 @Component
 class ImageGeneration(
-    @Value("\${openai.api.baseUrl}") private val openAIBaseUrl: String,
-
-    @Value("\${openai.apikey}") private val openAIKey: String,
-
-    @Value("\${openai.imageCount}") private val imageCount: Int = 1,
-
-    @Value("\${openai.badwords}") private val badWords: List<String>,
+    private val openAiProperties: OpenAiProperties,
 
     @Value("\${resources.images.path}") private val imagePath: String
 ) : Command {
@@ -53,7 +48,7 @@ class ImageGeneration(
             return
         }
 
-        for (badWord in badWords) {
+        for (badWord in openAiProperties.badwords) {
             if (prompt.lowercase().contains(badWord)) {
                 val filesToUpload = mutableListOf<MessageCreateFields.File>()
                 filesToUpload.add(
@@ -109,12 +104,12 @@ class ImageGeneration(
     }
 
     private fun getImageUrls(webClient: WebClient, prompt: String): ArrayList<String> {
-        val jsonFlux =
-            webClient.post().uri("$openAIBaseUrl/images/generations").header("Authorization", "Bearer $openAIKey")
-                .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(MessageBody(prompt, imageCount)))
-                .retrieve().onStatus({ statusCode: HttpStatusCode -> statusCode.isError }) { response: ClientResponse ->
-                    response.bodyToMono(String::class.java).map { IllegalStateException(it) }
-                }.bodyToFlux(ObjectNode::class.java)
+        val jsonFlux = webClient.post().uri("${openAiProperties.api.baseUrl}/images/generations")
+            .header("Authorization", "Bearer ${openAiProperties.apikey}").contentType(MediaType.APPLICATION_JSON)
+            .body(BodyInserters.fromValue(MessageBody(prompt, openAiProperties.imageCount))).retrieve()
+            .onStatus({ statusCode: HttpStatusCode -> statusCode.isError }) { response: ClientResponse ->
+                response.bodyToMono(String::class.java).map { IllegalStateException(it) }
+            }.bodyToFlux(ObjectNode::class.java)
 
         val jsonResponse = jsonFlux.blockLast()
 

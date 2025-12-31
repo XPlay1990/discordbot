@@ -3,6 +3,7 @@ package com.jad.discordbot.commands.openai
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectWriter
 import com.jad.discordbot.commands.Command
+import com.jad.discordbot.util.config.OpenAiProperties
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.MessageCreateFields
 import discord4j.core.spec.MessageEditSpec
@@ -21,13 +22,7 @@ import java.util.*
 
 @Component
 class TextCompletion(
-    @Value("\${openai.api.baseUrl}") private val openAIUrl: String,
-
-    @Value("\${openai.chat.model}") private val openAIModel: String,
-
-    @Value("\${openai.apikey}") private val openAIKey: String,
-
-    @Value("\${openai.badwords}") private val badWords: List<String>,
+    private val openAiProperties: OpenAiProperties,
 
     @Value("\${resources.images.path}") private val imagePath: String
 ) : Command {
@@ -37,7 +32,7 @@ class TextCompletion(
     override val commandList: Array<String>
         get() = arrayOf("chat", "c")
     override val description: String
-        get() = "Chat with OpenAI $openAIModel\nMessage History is stored for 5 min\nType '@R2D2 chat clear' to clear your message history"
+        get() = "Chat with OpenAI ${openAiProperties.chat.model}\nMessage History is stored for 5 min\nType '@R2D2 chat clear' to clear your message history"
     override val priority: Int
         get() = 5
 
@@ -58,7 +53,7 @@ class TextCompletion(
             return
         }
 
-        for (badWord in badWords) {
+        for (badWord in openAiProperties.badwords) {
             if (prompt.lowercase().contains(badWord)) {
                 val filesToUpload = mutableListOf<MessageCreateFields.File>()
                 filesToUpload.add(
@@ -133,12 +128,13 @@ class TextCompletion(
         for (storedMessage in storedMessageList) {
             messageContent.add(storedMessage.message)
         }
-        val messageBody = MessageBody(messageContent, openAIModel)
+        val messageBody = MessageBody(messageContent, openAiProperties.chat.model)
 
         logger.debug("Sending request to OpenAI: ${objectWriter.writeValueAsString(messageBody)})}")
 
-        val jsonFlux = webClient.post().uri("$openAIUrl/chat/completions").header("Authorization", "Bearer $openAIKey")
-            .contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(messageBody)).retrieve()
+        val jsonFlux = webClient.post().uri("${openAiProperties.api.baseUrl}/chat/completions")
+            .header("Authorization", "Bearer ${openAiProperties.apikey}").contentType(MediaType.APPLICATION_JSON)
+            .body(BodyInserters.fromValue(messageBody)).retrieve()
             .onStatus({ statusCode: HttpStatusCode -> statusCode.isError }) { response: ClientResponse ->
                 response.bodyToMono(String::class.java).map { IllegalStateException(it) }
             }.bodyToFlux(ObjectNode::class.java)
