@@ -8,6 +8,7 @@ import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrameBufferFactory
 import com.sedmelluq.discord.lavaplayer.track.playback.NonAllocatingAudioFrameBuffer
+import dev.lavalink.youtube.YoutubeAudioSourceManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.util.concurrent.atomic.AtomicBoolean
@@ -33,9 +34,14 @@ class AudioConfiguration {
                 )
             }
 
-        // Allow playerManager to parse remote sources like YouTube links
-        AudioSourceManagers.registerRemoteSources(playerManager);
-        AudioSourceManagers.registerLocalSource(playerManager);
+        // Register maintained remote sources. The deprecated built-in YouTube
+        // source is excluded in favour of Lavalink's dedicated implementation.
+        AudioSourceManagers.registerRemoteSources(
+            playerManager,
+            com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager::class.java
+        )
+        playerManager.registerSourceManager(YoutubeAudioSourceManager())
+        AudioSourceManagers.registerLocalSource(playerManager)
 
         return playerManager
     }
