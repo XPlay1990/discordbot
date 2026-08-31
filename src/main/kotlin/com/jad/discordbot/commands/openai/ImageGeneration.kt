@@ -115,7 +115,7 @@ class ImageGeneration(
 
         val imageLinks = ArrayList<String>()
         jsonResponse?.get("data")?.forEach { dataElement ->
-            val url = dataElement.get("url")?.asText()
+            val url = dataElement.get("url")?.asString()
             if (url != null) {
                 imageLinks.add(url)
             }

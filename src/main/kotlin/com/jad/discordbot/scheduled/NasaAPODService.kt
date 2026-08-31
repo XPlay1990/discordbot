@@ -44,9 +44,9 @@ class NasaAPODService(private val botUtils: BotUtils) {
                 .block(REQUEST_TIMEOUT)
                 ?: throw IllegalStateException("NASA returned an empty APOD response")
 
-            val title = jsonResponse.get("title")?.asText()?.takeIf(String::isNotBlank)
+            val title = jsonResponse.get("title")?.asString()?.takeIf(String::isNotBlank)
                 ?: throw IllegalStateException("NASA APOD response does not contain a title")
-            val explanation = jsonResponse.get("explanation")?.asText()?.takeIf(String::isNotBlank)
+            val explanation = jsonResponse.get("explanation")?.asString()?.takeIf(String::isNotBlank)
                 ?: throw IllegalStateException("NASA APOD response does not contain an explanation")
             val url = getUrlFromRequest(jsonResponse)
 
@@ -59,8 +59,8 @@ class NasaAPODService(private val botUtils: BotUtils) {
     }
 
     private fun getUrlFromRequest(jsonResponse: ObjectNode): String {
-        var url = jsonResponse.get("hdurl")?.asText()?.takeIf(String::isNotBlank)
-            ?: jsonResponse.get("url")?.asText()?.takeIf(String::isNotBlank)
+        var url = jsonResponse.get("hdurl")?.asString()?.takeIf(String::isNotBlank)
+            ?: jsonResponse.get("url")?.asString()?.takeIf(String::isNotBlank)
             ?: throw IllegalStateException("NASA APOD response does not contain a media URL")
         // replace embedding if it is a YouTube video
         url = url.replace(

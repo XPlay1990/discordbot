@@ -144,8 +144,8 @@ class TextCompletion(
         val responseList = ArrayList<Message>()
         jsonResponse?.get("choices")?.forEach { dataElement ->
             val message = dataElement.get("message")
-            val role = message.get("role").asText()
-            val chatResponse = message.get("content").asText()
+            val role = message.get("role").asString()
+            val chatResponse = message.get("content").asString()
             if (chatResponse != null) {
                 responseList.add(Message(chatResponse, role))
             }

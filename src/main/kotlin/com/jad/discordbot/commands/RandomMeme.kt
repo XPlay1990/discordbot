@@ -37,8 +37,8 @@ class RandomMeme : Command {
 
         val jsonResponse = jsonFlux.blockLast()
 
-        val embed: EmbedCreateSpec = EmbedCreateSpec.builder().title(jsonResponse!!.get("title")!!.asText())
-            .image(jsonResponse.get("url")!!.asText()).build()
+        val embed: EmbedCreateSpec = EmbedCreateSpec.builder().title(jsonResponse!!.get("title")!!.asString())
+            .image(jsonResponse.get("url")!!.asString()).build()
 
         messageChannel.createMessage().withEmbeds(embed).subscribe()
     }
