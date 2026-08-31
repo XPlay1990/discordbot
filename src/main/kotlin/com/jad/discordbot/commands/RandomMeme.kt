@@ -10,16 +10,15 @@ import org.springframework.web.reactive.function.client.WebClient
 import tools.jackson.databind.node.ObjectNode
 
 @Component
-class RandomMeme : Command {
+class RandomMeme(
+    @Value("\${meme.api}") private val memeUrl: String
+) : Command {
     override val commandList: Array<String>
         get() = arrayOf("meme")
     override val description: String
         get() = "returns random meme"
     override val priority: Int
         get() = 5
-
-    @Value("\${meme.api}")
-    private val memeUrl: String = ""
 
     override fun handle(event: MessageCreateEvent) {
         val messageChannel = event.message.channel.block()

@@ -8,13 +8,11 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
 @Component
-class BotUtils(private val gatewayDiscordClient: GatewayDiscordClient) {
-    @Value("\${bot.channelId}")
-    private val botChannelId: String = ""
-
-    @Value("\${bot.mainChannelId}")
-    private val mainChannelId: String = ""
-
+class BotUtils(
+    private val gatewayDiscordClient: GatewayDiscordClient,
+    @Value("\${bot.channelId}") private val botChannelId: String,
+    @Value("\${bot.mainChannelId}") private val mainChannelId: String
+) {
     fun getBotChannel(): MessageChannel {
         return gatewayDiscordClient.getChannelById(Snowflake.of(botChannelId)).block()!! as MessageChannel
     }

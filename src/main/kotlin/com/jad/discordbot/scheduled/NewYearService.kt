@@ -10,19 +10,13 @@ import org.springframework.stereotype.Component
 
 //provides new years message
 @Component
-class NewYearService(private val botUtils: BotUtils) {
-    @Value("\${newYear.title}")
-    private val title: String = ""
-
-    @Value("\${newYear.message}")
-    private val message: String = ""
-
-    @Value("\${newYear.picture}")
-    private val pictureUrl: String = ""
-
-    @Value("\${newYear.footer}")
-    private val footer: String = ""
-
+class NewYearService(
+    private val botUtils: BotUtils,
+    @Value("\${newYear.title}") private val title: String,
+    @Value("\${newYear.message}") private val message: String,
+    @Value("\${newYear.picture}") private val pictureUrl: String,
+    @Value("\${newYear.footer}") private val footer: String
+) {
     @Scheduled(cron = "\${newYear.cron}", zone = "Europe/Berlin")
     @Retryable(value = [Exception::class])
     fun postNewYearMessage() {

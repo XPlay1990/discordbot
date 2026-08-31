@@ -11,10 +11,9 @@ import org.springframework.stereotype.Component
 import org.springframework.util.ResourceUtils
 
 @Component
-class FildonS4 : Command {
-
-    @Value("\${resources.images.path}")
-    private val imagePath: String = ""
+class FildonS4(
+    @Value("\${resources.images.path}") private val imagePath: String
+) : Command {
     override val commandList: Array<String>
         get() = arrayOf("fildon")
     override val description: String
