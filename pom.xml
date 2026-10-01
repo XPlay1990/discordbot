@@ -24,15 +24,22 @@
         <guava.version>33.7.2-jre</guava.version>
         <commonsio.version>2.22.0</commonsio.version>
         <lavaplayer.version>2.2.7</lavaplayer.version>
-        <youtube-source.version>1.18.2</youtube-source.version>
+        <!-- Source revision tagged 1.18.2; upstream's releases repository is unavailable. -->
+        <youtube-source.version>158726dc7d570e8ff32512d6ab15736d561040b7-SNAPSHOT</youtube-source.version>
         <discord4j.version>3.3.3</discord4j.version>
     </properties>
 
     <repositories>
         <repository>
-            <id>lavalink</id>
-            <name>Lavalink Releases</name>
-            <url>https://maven.lavalink.dev/releases</url>
+            <id>lavalink-snapshots</id>
+            <name>Lavalink Snapshots</name>
+            <url>https://maven.lavalink.dev/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </repository>
     </repositories>
 

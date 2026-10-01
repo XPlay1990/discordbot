@@ -16,6 +16,11 @@ test, and package the application. Docker is required for
 uses a Java 26 runtime, inferred from `java.version`. Kotlin 2.4.20 uses the same
 JVM target through the Spring Boot parent configuration.
 
+The YouTube source dependency uses the snapshot of the exact commit tagged
+`1.18.2` from Lavalink's official snapshots repository. The upstream releases
+repository is currently unavailable; this pin keeps the existing source revision
+resolvable on fresh build agents.
+
 The Azure DevOps pipeline builds commits on `master`, runs verification, and
 pushes the image to `qdsoftware.azurecr.io/discordbot` with the build ID,
 application version, and `latest` tags. It deploys the build ID tag to container
