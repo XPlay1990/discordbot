@@ -24,7 +24,7 @@ import java.util.*
 class TextCompletion(
     private val openAiProperties: OpenAiProperties,
 
-    @Value("\${resources.images.path}") private val imagePath: String
+    @param:Value("\${resources.images.path}") private val imagePath: String
 ) : Command {
 
     private val messageStore = HashMap<String, MutableList<StoredMessage>>()

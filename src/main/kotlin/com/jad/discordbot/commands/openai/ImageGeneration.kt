@@ -28,7 +28,7 @@ import java.io.*
 class ImageGeneration(
     private val openAiProperties: OpenAiProperties,
 
-    @Value("\${resources.images.path}") private val imagePath: String
+    @param:Value("\${resources.images.path}") private val imagePath: String
 ) : Command {
     override val commandList: Array<String>
         get() = arrayOf("createimage", "ci")

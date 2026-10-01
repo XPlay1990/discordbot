@@ -29,7 +29,7 @@ import java.time.Duration
 
 @Component
 class PlayMusic(
-    @Value("\${resources.sounds.path}") private val soundPath: String = "",
+    @param:Value("\${resources.sounds.path}") private val soundPath: String = "",
     private val audioPlayer: AudioPlayer,
     private val audioPlayerManager: AudioPlayerManager,
     private val customAudioLoadResultHandler: CustomAudioLoadResultHandler,

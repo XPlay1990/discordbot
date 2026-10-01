@@ -17,8 +17,8 @@ import java.time.Duration
 @Component
 class NasaAPODService(
     private val botUtils: BotUtils,
-    @Value("\${nasa.api}") private val nasaUrl: String,
-    @Value("\${nasa.apikey}") private val apiKey: String
+    @param:Value("\${nasa.api}") private val nasaUrl: String,
+    @param:Value("\${nasa.apikey}") private val apiKey: String
 ) {
     private val webClient = WebClient.builder()
         .clientConnector(

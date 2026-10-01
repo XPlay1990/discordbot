@@ -12,7 +12,7 @@ import org.springframework.util.ResourceUtils
 
 @Component
 class FildonS4(
-    @Value("\${resources.images.path}") private val imagePath: String
+    @param:Value("\${resources.images.path}") private val imagePath: String
 ) : Command {
     override val commandList: Array<String>
         get() = arrayOf("fildon")

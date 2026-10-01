@@ -12,10 +12,10 @@ import org.springframework.stereotype.Component
 @Component
 class NewYearService(
     private val botUtils: BotUtils,
-    @Value("\${newYear.title}") private val title: String,
-    @Value("\${newYear.message}") private val message: String,
-    @Value("\${newYear.picture}") private val pictureUrl: String,
-    @Value("\${newYear.footer}") private val footer: String
+    @param:Value("\${newYear.title}") private val title: String,
+    @param:Value("\${newYear.message}") private val message: String,
+    @param:Value("\${newYear.picture}") private val pictureUrl: String,
+    @param:Value("\${newYear.footer}") private val footer: String
 ) {
     @Scheduled(cron = "\${newYear.cron}", zone = "Europe/Berlin")
     @Retryable(value = [Exception::class])

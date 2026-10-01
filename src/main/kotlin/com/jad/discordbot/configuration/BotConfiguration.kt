@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class BotConfiguration(
-    @Value("\${discord.botToken}") private val botToken: String
+    @param:Value("\${discord.botToken}") private val botToken: String
 ) {
     private var gatewayDiscordClient: GatewayDiscordClient? = null
 

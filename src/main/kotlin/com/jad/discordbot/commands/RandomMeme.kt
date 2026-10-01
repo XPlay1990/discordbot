@@ -11,7 +11,7 @@ import tools.jackson.databind.node.ObjectNode
 
 @Component
 class RandomMeme(
-    @Value("\${meme.api}") private val memeUrl: String
+    @param:Value("\${meme.api}") private val memeUrl: String
 ) : Command {
     override val commandList: Array<String>
         get() = arrayOf("meme")

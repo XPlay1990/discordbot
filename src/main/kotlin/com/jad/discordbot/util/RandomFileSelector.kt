@@ -11,7 +11,7 @@ import java.util.stream.Collectors
 
 @Component
 class RandomFileSelector(
-    @Value("\${resources.sounds.path}") private val soundPath: String
+    @param:Value("\${resources.sounds.path}") private val soundPath: String
 ) {
     private var soundFiles: List<Path> = emptyList()
 

@@ -1,51 +1,107 @@
-# Maven
-# Build your Java project and run tests with Apache Maven.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/java
-
 trigger:
-- master
+  batch: true
+  branches:
+    include:
+    - master
 
 pool:
   vmImage: ubuntu-latest
 
+variables:
+  containerRegistry: qdsoftware.azurecr.io
+  imageRepository: discordbot
+  kubernetesServiceConnection: qdsoftware-discordbot
+  kubernetesNamespace: qdsoftware
+  kubernetesDeployment: discordbot
+  kubernetesContainer: discordbot
+  kubectlVersion: '1.36.4'
+
 steps:
-  #install jdk
-- bash: 'wget --no-check-certificate -c --header "Cookie: oraclelicense=accept-securebackup-cookie" https://download.java.net/java/GA/jdk26.0.2/818d462d89b645c7a1aad49066c454e5/10/GPL/openjdk-26.0.2_linux-x64_bin.tar.gz'
-  displayName: 'Download OpenJDK 26'
+- bash: |
+    set -euo pipefail
+    archive="$(Agent.TempDirectory)/openjdk-26.0.2_linux-x64_bin.tar.gz"
+    url="https://download.java.net/java/GA/jdk26.0.2/818d462d89b645c7a1aad49066c454e5/10/GPL/openjdk-26.0.2_linux-x64_bin.tar.gz"
+    curl --fail --location --retry 3 "$url" --output "$archive"
+    checksum=$(curl --fail --location --retry 3 "$url.sha256" | awk '{print $1}')
+    printf '%s  %s\n' "$checksum" "$archive" | sha256sum --check -
+  displayName: Download and verify JDK 26
+
 - task: JavaToolInstaller@0
-  displayName: 'Install JDK'
+  displayName: Install JDK 26
   inputs:
-    versionSpec: 26
+    versionSpec: '26'
     jdkArchitectureOption: x64
     jdkSourceOption: LocalDirectory
-    jdkFile: '$(build.sourcesdirectory)/openjdk-26.0.2_linux-x64_bin.tar.gz'
-    jdkDestinationDirectory: '$(agent.toolsDirectory)/jdk26'
+    jdkFile: '$(Agent.TempDirectory)/openjdk-26.0.2_linux-x64_bin.tar.gz'
+    jdkDestinationDirectory: '$(Agent.ToolsDirectory)/jdk26'
 
 - task: Maven@4
+  displayName: Compile, test, and package on Java 26
   inputs:
-    mavenPomFile: 'pom.xml'
-    goals: 'spring-boot:build-image -DskipTests'
+    mavenPomFile: pom.xml
+    goals: clean verify
+    options: '--batch-mode --no-transfer-progress'
+    publishJUnitResults: true
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+    javaHomeOption: Path
+    jdkDirectory: '$(JAVA_HOME)'
+    mavenVersionOption: Default
+
+- task: Maven@4
+  displayName: Build container image
+  inputs:
+    mavenPomFile: pom.xml
+    goals: spring-boot:build-image-no-fork
+    options: >-
+      --batch-mode --no-transfer-progress
+      -Dspring-boot.build-image.imageName=$(containerRegistry)/$(imageRepository):$(Build.BuildId)
     publishJUnitResults: false
-    javaHomeOption: 'JDKVersion'
-    mavenVersionOption: 'Default'
-    mavenAuthenticateFeed: false
-    effectivePomSkip: false
-    sonarQubeRunAnalysis: false
+    javaHomeOption: Path
+    jdkDirectory: '$(JAVA_HOME)'
+    mavenVersionOption: Default
 
 - task: PowerShell@2
+  displayName: Read application version
   inputs:
-    targetType: 'inline'
+    targetType: inline
     script: |
-      [xml]$pomXml = Get-Content .\pom.xml
-      # version
-      $version=$pomXml.project.version
-      Write-Host "##vso[task.setvariable variable=version]$version"
+      [xml]$pomXml = Get-Content ./pom.xml
+      Write-Host "##vso[task.setvariable variable=version]$($pomXml.project.version)"
+
 - task: Docker@2
+  displayName: Push build, version, and latest image tags
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   inputs:
-    containerRegistry: 'qdsoftware'
-    repository: 'discordbot'
+    containerRegistry: qdsoftware
+    repository: '$(imageRepository)'
+    command: push
     tags: |
+      $(Build.BuildId)
       $(version)
       latest
-    command: 'push'
+
+- task: Kubernetes@1
+  displayName: Deploy the image built by this pipeline
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  inputs:
+    connectionType: Kubernetes Service Connection
+    kubernetesServiceEndpoint: '$(kubernetesServiceConnection)'
+    namespace: '$(kubernetesNamespace)'
+    command: set
+    arguments: >-
+      image deployment/$(kubernetesDeployment)
+      $(kubernetesContainer)=$(containerRegistry)/$(imageRepository):$(Build.BuildId)
+    versionSpec: '$(kubectlVersion)'
+    outputFormat: none
+
+- task: Kubernetes@1
+  displayName: Wait for the Discord bot rollout
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  inputs:
+    connectionType: Kubernetes Service Connection
+    kubernetesServiceEndpoint: '$(kubernetesServiceConnection)'
+    namespace: '$(kubernetesNamespace)'
+    command: rollout
+    arguments: 'status deployment/$(kubernetesDeployment) --timeout=180s'
+    versionSpec: '$(kubectlVersion)'
+    outputFormat: none
