@@ -16,25 +16,20 @@ class RandomFileSelectorConfigurationTest {
     @Test
     fun `Spring injects the configured sounds path and selects files from it`() {
         val sound = Files.write(soundsDirectory.resolve("sound.wav"), byteArrayOf(1))
-        val germanDirectory = Files.createDirectory(soundsDirectory.resolve("meme_de"))
-        val germanSound = Files.write(germanDirectory.resolve("german.wav"), byteArrayOf(2))
+        val nestedDirectory = Files.createDirectory(soundsDirectory.resolve("nested"))
+        val nestedSound = Files.write(nestedDirectory.resolve("nested.wav"), byteArrayOf(2))
 
         withSelector { selector ->
             val selected = selector.getRandomSoundFile().toPath()
-            assertTrue(selected == sound || selected == germanSound)
-            assertEquals(germanSound, selector.getRandomSoundFileDE().toPath())
+            assertTrue(selected == sound || selected == nestedSound)
         }
     }
 
     @Test
-    fun `configured selector returns the requested number of playable files`() {
+    fun `configured selector returns the only available sound attachment`() {
         val sound = Files.write(soundsDirectory.resolve("sound.wav"), byteArrayOf(1))
-        Files.createDirectory(soundsDirectory.resolve("meme_de"))
-
         withSelector { selector ->
-            val selected = selector.getRandomSoundFileList(3)
-            assertEquals(3, selected.size)
-            assertTrue(selected.all { it.toPath() == sound })
+            assertEquals(sound, selector.getRandomSoundFile().toPath())
         }
     }
 

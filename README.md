@@ -4,7 +4,7 @@
 Current Features:
 - create AI Generated images for text input, using DALL-E/OpenAI API
 - Posting Nasa Picture of the day
-- Playing YouTube/random local sounds
+- Posting random local sound files in chat
 - Random memes
 - embedded Help command with command descriptions
 
@@ -16,10 +16,10 @@ test, and package the application. Docker is required for
 uses a Java 26 runtime, inferred from `java.version`. Kotlin 2.4.20 uses the same
 JVM target through the Spring Boot parent configuration.
 
-The YouTube source dependency uses the snapshot of the exact commit tagged
-`1.18.2` from Lavalink's official snapshots repository. The upstream releases
-repository is currently unavailable; this pin keeps the existing source revision
-resolvable on fresh build agents.
+Voice audio playback is temporarily removed, including the `play` command and
+voice controls in the help menu. Random sound attachments in chat remain available.
+Maven dependencies resolve from Maven Central; no Lavalink repository or external
+audio tools are required.
 
 The Azure DevOps pipeline builds commits on `master`, runs verification, and
 pushes the image to `qdsoftware.azurecr.io/discordbot` with the build ID,

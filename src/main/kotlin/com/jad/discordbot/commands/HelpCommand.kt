@@ -1,14 +1,10 @@
 package com.jad.discordbot.commands
 
-import com.jad.discordbot.commands.audio.PlayMusic
-import com.jad.discordbot.configuration.BotConfiguration.Companion.DEFAULT_VOICE_CHANNEL_ID
-import discord4j.common.util.Snowflake
 import discord4j.core.event.domain.interaction.ButtonInteractionEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.`object`.component.ActionRow
 import discord4j.core.`object`.component.Button
 import discord4j.core.`object`.entity.channel.MessageChannel
-import discord4j.core.`object`.entity.channel.VoiceChannel
 import discord4j.core.spec.EmbedCreateFields
 import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Color
@@ -23,7 +19,7 @@ import java.util.stream.Collectors
 
 @Component
 class HelpCommand(
-    private val commands: List<Command>, private val playMusic: PlayMusic, private val randomMeme: RandomMeme
+    private val commands: List<Command>, private val randomMeme: RandomMeme
 ) : Command {
     override val commandList: Array<String>
         get() = arrayOf("help", "h")
@@ -44,34 +40,18 @@ class HelpCommand(
                 .image("https://sayingimages.com/wp-content/uploads/i-needs-help-help-meme.jpg")
                 .timestamp(Instant.now()).footer("built by XPlay", null).build()
 
-            val joinVoiceButton: Button = Button.danger("joinVoice", "Join voice")
-            val playRandomButton: Button = Button.danger("playRandom", "Play random sound")
-            val playRandomDEButton: Button = Button.danger("playRandomDE", "DE meme")
             val memeButton: Button = Button.primary("meme", "Meme")
 
             val tempListener: Mono<Void> = event.client.on(ButtonInteractionEvent::class.java) { event ->
-                when (event.customId) {
-                    "joinVoice" -> playMusic.joinVoiceChannel(
-                        event.client.getChannelById(
-                            Snowflake.of(
-                                DEFAULT_VOICE_CHANNEL_ID
-                            )
-                        ).block()!! as VoiceChannel
-                    )
-
-                    "playRandom" -> playMusic.handleSubCommands(listOf("", "", "random"))
-                    "playRandomDE" -> playMusic.handleSubCommands(listOf("", "", "randomDE"))
-                    "meme" -> {
-                        randomMeme.sendMeme(messageChannel)
-                    }
-                }
-                return@on event.reply() // creates warning in log, "Message cannot be empty" -> Discord4j bug
+                if (event.customId != "meme") return@on Mono.empty<Void>()
+                randomMeme.sendMeme(messageChannel)
+                return@on event.deferEdit()
             }.timeout(Duration.ofMinutes(30)) // Timeout after 30 minutes
                 // Handle TimeoutException that will be thrown when the above times out
                 .onErrorResume(TimeoutException::class.java) { _ -> Mono.empty() }.then() //Transform the flux to a mono
 
             messageChannel.createMessage().withEmbeds(embed)
-                .withComponents(ActionRow.of(joinVoiceButton, playRandomButton, playRandomDEButton, memeButton))
+                .withComponents(ActionRow.of(memeButton))
                 .then(tempListener).subscribe()
         }
     }

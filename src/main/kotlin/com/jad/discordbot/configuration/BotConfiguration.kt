@@ -49,6 +49,5 @@ class BotConfiguration(
 
     companion object {
         private val logger = LoggerFactory.getLogger(this::class.java)
-        const val DEFAULT_VOICE_CHANNEL_ID = "709058379628150835"
     }
 }

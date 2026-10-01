@@ -15,40 +15,18 @@ class RandomFileSelector(
 ) {
     private var soundFiles: List<Path> = emptyList()
 
-    private var soundFilesDE: List<Path> = emptyList()
-
     init {
         try {
             soundFiles = Files.walk(
                 Path.of(soundPath)
-            ).filter(Files::isRegularFile).collect(Collectors.toList())
+            ).use { paths -> paths.filter(Files::isRegularFile).collect(Collectors.toList()) }
         } catch (e: Exception) {
             logger.error("Error while loading sound files", e)
-        }
-
-        try {
-            soundFilesDE = Files.walk(
-                Path.of("$soundPath/meme_de")
-            ).filter(Files::isRegularFile).collect(Collectors.toList())
-        } catch (e: Exception) {
-            logger.error("Error while loading meme_de sound files", e)
         }
     }
 
     fun getRandomSoundFile(): File {
         return File(soundFiles[Random().nextInt(soundFiles.size)].toUri())
-    }
-
-    fun getRandomSoundFileDE(): File {
-        return File(soundFilesDE[Random().nextInt(soundFilesDE.size)].toUri())
-    }
-
-    fun getRandomSoundFileList(count: Int): MutableList<File> {
-        val fileList = mutableListOf<File>()
-        for (i in 0 until count) {
-            fileList.add(getRandomSoundFile())
-        }
-        return fileList
     }
 
     companion object {
