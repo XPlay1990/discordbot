@@ -33,6 +33,9 @@ The Kubernetes connection uses service account `qdsoftware/azure-deployment`,
 which can update and monitor only the `discordbot` Deployment. Registry pulls
 use the existing `qdsoftware-azure` image pull Secret in the cluster.
 
+The deployment commands verify Rancher's public HTTPS certificate using the Ubuntu
+agent's CA bundle, rather than the internal Kubernetes CA included with the service account.
+
 The current Kubernetes Deployment uses rolling updates, which can briefly run
 two bot instances. Rollout success checks Kubernetes availability; the current
 Deployment has no readiness probe to verify that the bot has connected to Discord.
