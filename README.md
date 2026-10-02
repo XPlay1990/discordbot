@@ -21,6 +21,11 @@ voice controls in the help menu. Random sound attachments in chat remain availab
 Maven dependencies resolve from Maven Central; no Lavalink repository or external
 audio tools are required.
 
+NASA Picture of the Day fetches allow 30 seconds per attempt and retry any fetch
+error twice, waiting two seconds between attempts.
+Discord posting happens once after a successful fetch. Optional settings
+`nasa.request-timeout` and `nasa.retry-delay` default to `PT30S` and `PT2S`.
+
 The Azure DevOps pipeline builds commits on `master`, runs verification, and
 pushes the image to `qdsoftware.azurecr.io/discordbot` with the build ID,
 application version, and `latest` tags. It deploys the build ID tag to container
