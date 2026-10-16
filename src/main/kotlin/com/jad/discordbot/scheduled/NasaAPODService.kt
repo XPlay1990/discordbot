@@ -15,6 +15,7 @@ import reactor.core.Exceptions
 import reactor.core.publisher.Mono
 import reactor.netty.http.client.HttpClient
 import reactor.util.retry.Retry
+import tools.jackson.databind.node.ArrayNode
 import tools.jackson.databind.node.ObjectNode
 import java.time.Duration
 
@@ -46,11 +47,11 @@ class NasaAPODService(
     @Scheduled(cron = "\${nasa.cron}", zone = "Europe/Berlin")
     fun getPictureOfTheDay() {
         logger.info("Posting Picture of the Day")
-        val jsonResponse = try {
+        val apodArray = try {
             webClient.get()
                 .uri(nasaUrl + apiKey)
                 .retrieve()
-                .bodyToMono<ObjectNode>()
+                .bodyToMono<ArrayNode>()
                 .switchIfEmpty(Mono.error(IllegalStateException("NASA returned an empty APOD response")))
                 .timeout(requestTimeout)
                 .retryWhen(
@@ -73,6 +74,8 @@ class NasaAPODService(
         }
 
         try {
+            val jsonResponse = apodArray.get(0) as? ObjectNode
+                ?: throw IllegalStateException("NASA APOD response array is empty")
             val title = jsonResponse.get("title")?.asString()?.takeIf(String::isNotBlank)
                 ?: throw IllegalStateException("NASA APOD response does not contain a title")
             val explanation = jsonResponse.get("explanation")?.asString()?.takeIf(String::isNotBlank)
@@ -94,15 +97,33 @@ class NasaAPODService(
         else -> failure.javaClass.simpleName
     }
 
-    private fun getUrlFromRequest(jsonResponse: ObjectNode): String {
-        var url = jsonResponse.get("hdurl")?.asString()?.takeIf(String::isNotBlank)
-            ?: jsonResponse.get("url")?.asString()?.takeIf(String::isNotBlank)
+    private fun getUrlFromRequest(apod: ObjectNode): String {
+        // Direct HD image URL (used by image-type APODs in the new API)
+        val hdUrl = apod.get("hdurl")?.asString()?.takeIf(String::isNotBlank)
+        if (hdUrl != null) return hdUrl
+
+        // For video APODs, extract the actual media URL from the embedded HTML snippet
+        val basicHtml = apod.get("basic_html")?.asString()?.takeIf(String::isNotBlank)
+        if (basicHtml != null) {
+            // Direct video source (MP4 etc.) — Discord can embed these inline
+            val videoSrc = Regex("""<source\b[^>]*\bsrc="([^"]+)"""", RegexOption.IGNORE_CASE)
+                .find(basicHtml)?.groupValues?.get(1)
+            if (!videoSrc.isNullOrBlank()) return videoSrc
+
+            // YouTube embed → convert to watch URL so Discord shows a video card
+            val ytId = Regex("""youtube\.com/embed/([a-zA-Z0-9_-]+)""")
+                .find(basicHtml)?.groupValues?.get(1)
+            if (!ytId.isNullOrBlank()) return "https://www.youtube.com/watch?v=$ytId"
+
+            // Thumbnail/placeholder image inside basic_html
+            val imgSrc = Regex("""<img\b[^>]*\bsrc="([^"]+)"""", RegexOption.IGNORE_CASE)
+                .find(basicHtml)?.groupValues?.get(1)
+            if (!imgSrc.isNullOrBlank()) return imgSrc
+        }
+
+        // Fallback: article permalink (may not embed well in Discord for video APODs)
+        return apod.get("url")?.asString()?.takeIf(String::isNotBlank)
             ?: throw IllegalStateException("NASA APOD response does not contain a media URL")
-        // replace embedding if it is a YouTube video
-        url = url.replace(
-            "/embed/", "/watch?v="
-        ).replace("?rel=0", "")
-        return url
     }
 
     companion object {

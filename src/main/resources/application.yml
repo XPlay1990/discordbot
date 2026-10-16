@@ -114,7 +114,7 @@ openai:
     - klöten
 
 nasa:
-  api: https://api.nasa.gov/planetary/apod?api_key=
+  api: https://science.nasa.gov/wp-json/wp/v2/apod-basic/?api_key=
   apikey: nasakey
   cron: "0 30 23 * * *"
 

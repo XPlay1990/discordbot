@@ -166,9 +166,47 @@ class NasaAPODServiceTest {
         }
     }
 
+    @Test
+    fun `an image APOD uses hdurl for direct embedding`() {
+        val json = """[{"title":"Image APOD","explanation":"A galaxy","hdurl":"https://example.com/galaxy.jpg","url":"https://example.com/article","media_type":"image"}]"""
+        withNasaServer({ _, response ->
+            response.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .sendString(Mono.just(json)).then()
+        }) { fixture ->
+            fixture.service.getPictureOfTheDay()
+            verify(fixture.channel).createMessage("NASA Picture of the day\n\nImage APOD\n\nA galaxy\nhttps://example.com/galaxy.jpg")
+        }
+    }
+
+    @Test
+    fun `a video APOD with MP4 source in basic_html posts the direct video URL`() {
+        val videoHtml = """<video controls title=""><source src="https://example.com/video.mp4" type="video/mp4"></video>"""
+        val json = """[{"title":"Video APOD","explanation":"A cool video","hdurl":"","basic_html":"${videoHtml.replace("\"", "\\\"")}","url":"https://example.com/article","media_type":"video"}]"""
+        withNasaServer({ _, response ->
+            response.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .sendString(Mono.just(json)).then()
+        }) { fixture ->
+            fixture.service.getPictureOfTheDay()
+            verify(fixture.channel).createMessage("NASA Picture of the day\n\nVideo APOD\n\nA cool video\nhttps://example.com/video.mp4")
+        }
+    }
+
+    @Test
+    fun `a video APOD with YouTube embed in basic_html converts to watch URL`() {
+        val videoHtml = """<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0"></iframe>"""
+        val json = """[{"title":"YT APOD","explanation":"A YouTube video","hdurl":"","basic_html":"${videoHtml.replace("\"", "\\\"")}","url":"https://example.com/article","media_type":"video"}]"""
+        withNasaServer({ _, response ->
+            response.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .sendString(Mono.just(json)).then()
+        }) { fixture ->
+            fixture.service.getPictureOfTheDay()
+            verify(fixture.channel).createMessage("NASA Picture of the day\n\nYT APOD\n\nA YouTube video\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ")
+        }
+    }
+
     private fun successfulResponse(response: HttpServerResponse): Mono<Void> = response
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        .sendString(Mono.just("""{"title":"Test APOD","explanation":"Space","url":"https://example.com/image.jpg"}"""))
+        .sendString(Mono.just("""[{"title":"Test APOD","explanation":"Space","hdurl":"https://example.com/image.jpg","url":"https://example.com/article","media_type":"image"}]"""))
         .then()
 
     private data class Fixture(
