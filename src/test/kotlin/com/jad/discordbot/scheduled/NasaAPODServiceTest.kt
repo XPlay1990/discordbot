@@ -8,8 +8,10 @@ import discord4j.core.`object`.entity.channel.MessageChannel
 import discord4j.core.spec.MessageCreateMono
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.mock
@@ -201,6 +203,40 @@ class NasaAPODServiceTest {
         }) { fixture ->
             fixture.service.getPictureOfTheDay()
             verify(fixture.channel).createMessage("NASA Picture of the day\n\nYT APOD\n\nA YouTube video\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ")
+        }
+    }
+
+    @Test
+    fun `an HTML explanation is posted as plain text without label and teaser`() {
+        val explanationHtml = """<strong>Explanation:</strong> Look at the <a href="https://example.com/n">nebula</a> &amp; today&#8217;s <em>stars</em>.<br><br>More <a href="https://example.com/x">here</a>.<br><br><strong>Tomorrow's picture:</strong> something green"""
+        val json = """[{"title":"Ghosts &amp; Nebulas","explanation":"${explanationHtml.replace("\"", "\\\"")}","hdurl":"https://example.com/galaxy.jpg","media_type":"image"}]"""
+        withNasaServer({ _, response ->
+            response.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .sendString(Mono.just(json)).then()
+        }) { fixture ->
+            fixture.service.getPictureOfTheDay()
+            verify(fixture.channel).createMessage(
+                "NASA Picture of the day\n\nGhosts & Nebulas\n\nLook at the nebula & today’s stars.\n\nMore here.\nhttps://example.com/galaxy.jpg"
+            )
+        }
+    }
+
+    @Test
+    fun `an explanation that would exceed the Discord limit is shortened and keeps the URL`() {
+        val json = """[{"title":"Long APOD","explanation":"${"word ".repeat(600)}","hdurl":"https://example.com/galaxy.jpg","media_type":"image"}]"""
+        withNasaServer({ _, response ->
+            response.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .sendString(Mono.just(json)).then()
+        }) { fixture ->
+            val captor = ArgumentCaptor.forClass(String::class.java)
+            `when`(fixture.channel.createMessage(captor.capture())).thenReturn(fixture.message)
+
+            fixture.service.getPictureOfTheDay()
+
+            val message = captor.value
+            assertEquals(2000, message.length)
+            assertTrue(message.startsWith("NASA Picture of the day\n\nLong APOD\n\nword word"))
+            assertTrue(message.endsWith("…\nhttps://example.com/galaxy.jpg"))
         }
     }
 

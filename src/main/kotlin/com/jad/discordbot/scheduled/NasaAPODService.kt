@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import org.springframework.web.util.HtmlUtils
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientRequestException
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -76,19 +77,41 @@ class NasaAPODService(
         try {
             val jsonResponse = apodArray.get(0) as? ObjectNode
                 ?: throw IllegalStateException("NASA APOD response array is empty")
-            val title = jsonResponse.get("title")?.asString()?.takeIf(String::isNotBlank)
+            val title = jsonResponse.get("title")?.asString()?.let(::htmlToText)?.takeIf(String::isNotBlank)
                 ?: throw IllegalStateException("NASA APOD response does not contain a title")
-            val explanation = jsonResponse.get("explanation")?.asString()?.takeIf(String::isNotBlank)
+            val explanation = jsonResponse.get("explanation")?.asString()?.let(::htmlToText)?.takeIf(String::isNotBlank)
                 ?: throw IllegalStateException("NASA APOD response does not contain an explanation")
             val url = getUrlFromRequest(jsonResponse)
 
-            botUtils.getBotChannel().createMessage(
-                "NASA Picture of the day\n\n$title\n\n$explanation\n$url"
-            ).block(DISCORD_TIMEOUT)
+            botUtils.getBotChannel().createMessage(buildMessage(title, explanation, url)).block(DISCORD_TIMEOUT)
             logger.info("Posted NASA Picture of the Day")
         } catch (exception: Exception) {
             logger.error("Unable to post NASA Picture of the Day", exception)
         }
+    }
+
+    // The WordPress API returns the explanation as HTML with an "Explanation:" label and a "Tomorrow's picture" teaser.
+    private fun htmlToText(html: String): String {
+        val withoutTeaser = html.split(Regex("""(<strong>\s*)?Tomorrow['’]s picture""", RegexOption.IGNORE_CASE), limit = 2)[0]
+        val text = HtmlUtils.htmlUnescape(
+            withoutTeaser
+                .replace(Regex("""<br\s*/?>""", RegexOption.IGNORE_CASE), "\n")
+                .replace(Regex("""<[^>]+>"""), "")
+        )
+        return text.lines().joinToString("\n") { it.trim() }
+            .replace(Regex("""\n{3,}"""), "\n\n")
+            .trim()
+            .removePrefix("Explanation:")
+            .trim()
+    }
+
+    // Discord rejects messages longer than 2000 characters; shorten the explanation rather than lose the post.
+    private fun buildMessage(title: String, explanation: String, url: String): String {
+        val message = "NASA Picture of the day\n\n$title\n\n$explanation\n$url"
+        if (message.length <= DISCORD_MAX_MESSAGE_LENGTH) return message
+        val available = DISCORD_MAX_MESSAGE_LENGTH - (message.length - explanation.length) - 1
+        require(available > 0) { "NASA APOD title and URL leave no room for the explanation" }
+        return "NASA Picture of the day\n\n$title\n\n${explanation.take(available).trimEnd()}…\n$url"
     }
 
     private fun describeFailure(exception: Throwable): String = when (val failure = Exceptions.unwrap(exception)) {
@@ -132,6 +155,7 @@ class NasaAPODService(
         private val CONNECT_TIMEOUT: Duration = Duration.ofSeconds(10)
         private val DISCORD_TIMEOUT: Duration = Duration.ofSeconds(30)
         private const val MAX_RETRIES = 2L
+        private const val DISCORD_MAX_MESSAGE_LENGTH = 2000
         private val logger = LoggerFactory.getLogger(this::class.java)
     }
 }

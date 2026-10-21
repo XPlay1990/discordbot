@@ -23,6 +23,8 @@ audio tools are required.
 
 NASA Picture of the Day fetches allow 30 seconds per attempt and retry any fetch
 error twice, waiting two seconds between attempts.
+Explanations arrive as HTML and are posted as plain text, shortened if needed
+to fit Discord's 2000-character limit.
 Discord posting happens once after a successful fetch. Optional settings
 `nasa.request-timeout` and `nasa.retry-delay` default to `PT30S` and `PT2S`.
 
