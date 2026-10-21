@@ -92,7 +92,9 @@ class NasaAPODService(
     }
 
     private fun describeFailure(exception: Throwable): String = when (val failure = Exceptions.unwrap(exception)) {
-        is WebClientResponseException -> "HTTP ${failure.statusCode.value()}"
+        // Decoding errors are wrapped in a WebClientResponseException carrying the (successful) status.
+        is WebClientResponseException -> "HTTP ${failure.statusCode.value()}" +
+            (failure.cause?.let { ", ${it.javaClass.simpleName}" } ?: "")
         is WebClientRequestException -> failure.cause?.javaClass?.simpleName ?: failure.javaClass.simpleName
         else -> failure.javaClass.simpleName
     }
