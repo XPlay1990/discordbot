@@ -103,6 +103,10 @@
                         <tags>
                             ${dockerRegistry}/${project.artifactId}:${project.version},${dockerRegistry}/${project.artifactId}:latest
                         </tags>
+                        <env>
+                            <!-- Spring Cloud Bindings 2.0.4 fails on Spring Boot 4.2 (removed EnvironmentPostProcessor); the bot uses no service bindings. -->
+                            <BP_SPRING_CLOUD_BINDINGS_DISABLED>true</BP_SPRING_CLOUD_BINDINGS_DISABLED>
+                        </env>
                     </image>
                 </configuration>
                 <executions>
