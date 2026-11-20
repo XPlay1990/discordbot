@@ -26,7 +26,19 @@
         <guava.version>33.8.0-jre</guava.version>
         <commonsio.version>2.22.0</commonsio.version>
         <discord4j.version>3.3.3</discord4j.version>
+        <!-- Discord4J 3.3.3 needs reactor.retry, which reactor-extra 3.7 (Reactor 2026.0, Spring Boot 4.2) removed. -->
+        <reactor-extra.version>3.6.1</reactor-extra.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.projectreactor.addons</groupId>
+                <artifactId>reactor-extra</artifactId>
+                <version>${reactor-extra.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
