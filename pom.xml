@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.1</version>
+        <version>4.2.0</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.jad</groupId>
@@ -14,14 +14,16 @@
     <name>discordbot</name>
     <description>Bot for Discord</description>
     <properties>
-        <java.version>26</java.version>
-        <kotlin.version>2.4.20</kotlin.version>
+        <java.version>27</java.version>
+        <kotlin.version>2.4.21</kotlin.version>
+        <!-- Kotlin 2.4 cannot emit Java 27 bytecode (added in 2.5.0); Java 26 bytecode runs on the Java 27 runtime. -->
+        <kotlin.jvm.target>26</kotlin.jvm.target>
         <dockerRegistry>qdsoftware.azurecr.io</dockerRegistry>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <guava.version>33.7.2-jre</guava.version>
+        <guava.version>33.8.0-jre</guava.version>
         <commonsio.version>2.22.0</commonsio.version>
         <discord4j.version>3.3.3</discord4j.version>
     </properties>
@@ -115,6 +117,7 @@
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <configuration>
+                    <jvmTarget>${kotlin.jvm.target}</jvmTarget>
                     <args>
                         <arg>-Xjsr305=strict</arg>
                     </args>

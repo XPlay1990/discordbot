@@ -10,11 +10,12 @@ Current Features:
 
 ## Build and deployment
 
-Use JDK 26 and Maven 3.6.3 or newer. Run `mvn clean verify` to compile,
+Use JDK 27 and Maven 3.6.3 or newer. Run `mvn clean verify` to compile,
 test, and package the application. Docker is required for
 `mvn spring-boot:build-image-no-fork` after packaging. The default Paketo builder
-uses a Java 26 runtime, inferred from `java.version`. Kotlin 2.4.20 uses the same
-JVM target through the Spring Boot parent configuration.
+uses a Java 27 runtime, inferred from `java.version`. Kotlin 2.4 cannot emit
+Java 27 bytecode yet, so `kotlin.jvm.target` pins Kotlin to Java 26 bytecode;
+remove it once Kotlin 2.5.0 is used.
 
 Voice audio playback is temporarily removed, including the `play` command and
 voice controls in the help menu. Random sound attachments in chat remain available.

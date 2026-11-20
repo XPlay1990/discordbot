@@ -21,24 +21,24 @@ variables:
 steps:
 - bash: |
     set -euo pipefail
-    archive="$(Agent.TempDirectory)/openjdk-26.0.2_linux-x64_bin.tar.gz"
-    url="https://download.java.net/java/GA/jdk26.0.2/818d462d89b645c7a1aad49066c454e5/10/GPL/openjdk-26.0.2_linux-x64_bin.tar.gz"
+    archive="$(Agent.TempDirectory)/openjdk-27.0.1.1_linux-x64_bin.tar.gz"
+    url="https://download.java.net/java/GA/jdk27.0.1.1/c3a705caf5044be8aa0b09e62be69b20/4/GPL/openjdk-27.0.1.1_linux-x64_bin.tar.gz"
     curl --fail --location --retry 3 "$url" --output "$archive"
     checksum=$(curl --fail --location --retry 3 "$url.sha256" | awk '{print $1}')
     printf '%s  %s\n' "$checksum" "$archive" | sha256sum --check -
-  displayName: Download and verify JDK 26
+  displayName: Download and verify JDK 27
 
 - task: JavaToolInstaller@0
-  displayName: Install JDK 26
+  displayName: Install JDK 27
   inputs:
-    versionSpec: '26'
+    versionSpec: '27'
     jdkArchitectureOption: x64
     jdkSourceOption: LocalDirectory
-    jdkFile: '$(Agent.TempDirectory)/openjdk-26.0.2_linux-x64_bin.tar.gz'
-    jdkDestinationDirectory: '$(Agent.ToolsDirectory)/jdk26'
+    jdkFile: '$(Agent.TempDirectory)/openjdk-27.0.1.1_linux-x64_bin.tar.gz'
+    jdkDestinationDirectory: '$(Agent.ToolsDirectory)/jdk27'
 
 - task: Maven@4
-  displayName: Compile, test, and package on Java 26
+  displayName: Compile, test, and package on Java 27
   inputs:
     mavenPomFile: pom.xml
     goals: clean verify
